@@ -6,6 +6,7 @@ import com.surenot.raytracer.primitives.RayImpact;
 import com.surenot.raytracer.primitives.Vector3D;
 
 import java.awt.*;
+import java.security.InvalidParameterException;
 
 public final class Sphere3D implements Shape3D {
 
@@ -14,6 +15,9 @@ public final class Sphere3D implements Shape3D {
     private final int color;
 
     public Sphere3D(final Point3D center, final double radius, final int color){
+        if ( center == null ){
+            throw new InvalidParameterException();
+        }
         this.center = center;
         this.radius = radius;
         this.color = color;
@@ -45,8 +49,7 @@ public final class Sphere3D implements Shape3D {
 
     @Override
     public Vector3D getNormal(Point3D p) {
-
-        return null;
+        return Vector3D.getNormalizedVector3D(center, p);
     }
 
     @Override

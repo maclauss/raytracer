@@ -1,5 +1,7 @@
 package com.surenot.raytracer.primitives;
 
+import java.security.InvalidParameterException;
+
 /**
  * Created by m.clauss on 1/13/2016.
  */
@@ -14,14 +16,27 @@ public class Vector3D {
     private double length;
 
     public Vector3D(final Point3D origin, final Point3D direction){
+        if ( origin == null || direction == null ){
+            throw new InvalidParameterException();
+        }
         this.origin = origin;
         this.direction = direction;
-        // TODO try to replace with Double.NaN
+        // TODO try to replace with Double.NaN ?
         this.length = Double.MAX_VALUE;
     }
 
     public Vector3D multiply(double x){
         return new Vector3D(origin, new Point3D(direction.getX() * x, direction.getY() * x, direction.getZ() * x));
+    }
+
+    public double scalarProduct(Vector3D v){
+        double x = getDirection().getX() - origin.getX();
+        double y = getDirection().getY() - origin.getY();
+        double z = getDirection().getZ() - origin.getZ();
+        double xx = v.getDirection().getX() - v.getOrigin().getX();
+        double yy = v.getDirection().getY() - v.getOrigin().getY();
+        double zz = v.getDirection().getZ() - v.getOrigin().getZ();
+        return x * xx + y * yy + z * zz;
     }
 
     public Point3D getOrigin() {
@@ -43,6 +58,32 @@ public class Vector3D {
 
     public boolean isNormalized(){
         return origin.equals(Point3D.ORIGIN) && length < 1 + accuracy && length > 1 - accuracy;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Vector3D vector3D = (Vector3D) o;
+
+        if (Double.compare(vector3D.accuracy, accuracy) != 0) return false;
+        if (Double.compare(vector3D.length, length) != 0) return false;
+        if (!origin.equals(vector3D.origin)) return false;
+        return direction.equals(vector3D.direction);
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(accuracy);
+        result = (int) (temp ^ (temp >>> 32));
+        result = 31 * result + origin.hashCode();
+        result = 31 * result + direction.hashCode();
+        temp = Double.doubleToLongBits(length);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 
     public static Vector3D getNormalizedVector3D(Point3D origin, Point3D direction){

@@ -1,5 +1,7 @@
 package com.surenot.raytracer.primitives;
 
+import java.security.InvalidParameterException;
+
 /**
  * Created by m.clauss on 1/13/2016.
  */
@@ -11,6 +13,9 @@ public class RayImpact {
     private final double distance;
 
     public RayImpact(final Point3D impact, final double distance){
+        if ( impact == null && NONE != null ){
+            throw new InvalidParameterException();
+        }
         this.impact = impact;
         this.distance = distance;
     }

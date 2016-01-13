@@ -24,21 +24,44 @@ public class GUI extends JFrame {
         Collection<Shape3D> objects = new ArrayList();
         objects.add(new Sphere3D(new Point3D(20, 0, 1.5), 2, Color.RED.getRGB()));
         objects.add(new Sphere3D(new Point3D(22, 3.5, 2.5), 2, Color.BLUE.getRGB()));
-        objects.add(new Sphere3D(new Point3D(10, 1.2, 1.5), 0.5, Color.GREEN.getRGB()));
-        objects.add(new Sphere3D(new Point3D(25, 3.5, 1), 2, Color.GRAY.getRGB()));
+        objects.add(new Sphere3D(new Point3D(10, 1.2, -0.5), 0.5, Color.GREEN.getRGB()));
+        objects.add(new Sphere3D(new Point3D(25, 3.5, 0), 2, Color.GRAY.getRGB()));
 
         Collection<Point3D> lights = new ArrayList();
+        lights.add(new Point3D(75, 0, 75));
 
         Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects, lights);
 
         JFrame frame = new JFrame();
-        ImageIcon icon = new ImageIcon(scene.render());
+        final ImageIcon icon = new ImageIcon(scene.render());
         JLabel label = new JLabel(icon);
 
         frame.setSize(screenPixelCount);
         frame.add(label);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        Thread t  = new Thread(new Runnable(){
+           public void run(){
+               for ( int i = 0; ; i+=5 ){
+                   Collection<Point3D> lights = new ArrayList();
+                   int x = i % 360;
+                   lights.add(new Point3D(Math.cos(Math.toRadians(x)) * 75, Math.sin(Math.toRadians(x)) * 75, 75));
+                   Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects, lights);
+                   SwingUtilities.invokeLater(new Runnable() {
+                       public void run(){
+                           label.setIcon(new ImageIcon(scene.render()));
+                       }
+                   });
+                   try {
+                       Thread.sleep(100);
+                   } catch (InterruptedException e) {
+                       e.printStackTrace();
+                   }
+               }
+           }
+        });
+        t.start();
     }
 
 }

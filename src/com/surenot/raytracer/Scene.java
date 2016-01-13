@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 public final class Scene {
@@ -27,6 +28,9 @@ public final class Scene {
     |/__________|________________________  Y
 
     */
+
+    public final static double AMBIENT_LIGHT = 0.1;
+
     private final Point3D observer;
     private final Point3D origin;
     private final Dimension2D screenSize;
@@ -38,7 +42,9 @@ public final class Scene {
                  final Dimension2D screenSize, final int pixelCountX, final int pixelCountY,
                  final Collection<Shape3D> objects,
                  final Collection<Point3D> lightSources){
-        if ( observer == null || origin == null || screenSize == null || objects == null || lightSources == null ) throw new InvalidParameterException();
+        if ( observer == null || origin == null || screenSize == null || objects == null || lightSources == null ){
+            throw new InvalidParameterException();
+        }
         if ( screenSize.getX() <= 0 ) throw new InvalidParameterException();
         if ( screenSize.getY() <= 0 ) throw new InvalidParameterException();
         if ( pixelCountX <= 0 ) throw new InvalidParameterException();
@@ -81,6 +87,14 @@ public final class Scene {
                         impact = currentImpact;
                         color = object.getColor();
                         Vector3D normal = object.getNormal(impact.getImpact());
+                        for ( Point3D light : lightSources ){
+                            Vector3D lightVector = new Vector3D(impact.getImpact(), light);
+                            double theta = normal.scalarProduct(lightVector) / (normal.getLength() * lightVector.getLength());
+                            double coef = theta < 0 ? AMBIENT_LIGHT : AMBIENT_LIGHT + (1 - AMBIENT_LIGHT) * theta;
+                            color = new Color((int)(new Color(color).getRed() * coef),
+                                    (int)(new Color(color).getGreen() * coef),
+                                    (int)(new Color(color).getBlue() * coef)).getRGB();
+                        }
                     }
                 }
                 bi.setRGB(i, j, color);
