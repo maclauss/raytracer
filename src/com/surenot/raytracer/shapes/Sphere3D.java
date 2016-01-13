@@ -3,6 +3,7 @@ package com.surenot.raytracer.shapes;
 import com.surenot.raytracer.primitives.Point3D;
 import com.surenot.raytracer.primitives.Ray;
 import com.surenot.raytracer.primitives.RayImpact;
+import com.surenot.raytracer.primitives.Vector3D;
 
 import java.awt.*;
 
@@ -39,7 +40,13 @@ public final class Sphere3D implements Shape3D {
             impactDistance = t1 < 0 ? Double.NaN : t1;
         }
         impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
-        return new RayImpact(new Point3D(0, 0, 0), impactDistance);
+        return new RayImpact(ray.getVector().multiply(impactDistance).getDirection(), impactDistance);
+    }
+
+    @Override
+    public Vector3D getNormal(Point3D p) {
+
+        return null;
     }
 
     @Override

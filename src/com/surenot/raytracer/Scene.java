@@ -69,17 +69,18 @@ public final class Scene {
         BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
         for ( int i = 0; i < screen.length; i++ ){
             for ( int j = 0; j < screen[0].length; j++ ){
+                // TODO cache the rays, normalization is expensive
                 Ray ray = new Ray(screen[i][j]);
                 // TODO Add a background image and take the color of the pixel at pos i, j as default
                 int color = Color.BLACK.getRGB();
                 RayImpact impact = RayImpact.NONE;
                 for ( Shape3D object : objects ){
                     RayImpact currentImpact;
-                    // TODO cache the rays in an array, normalization is expensive
                     if ( (currentImpact = object.isHit(ray)) != RayImpact.NONE &&
                             impact.equals(RayImpact.NONE) || currentImpact.getDistance() < impact.getDistance() ){
                         impact = currentImpact;
                         color = object.getColor();
+                        Vector3D normal = object.getNormal(impact.getImpact());
                     }
                 }
                 bi.setRGB(i, j, color);
