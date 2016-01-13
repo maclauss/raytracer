@@ -27,7 +27,9 @@ public class GUI extends JFrame {
         objects.add(new Sphere3D(new Point3D(10, 1.2, 1.5), 0.5, Color.GREEN.getRGB()));
         objects.add(new Sphere3D(new Point3D(25, 3.5, 1), 2, Color.GRAY.getRGB()));
 
-        Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects);
+        Collection<Point3D> lights = new ArrayList();
+
+        Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects, lights);
 
         JFrame frame = new JFrame();
         ImageIcon icon = new ImageIcon(scene.render());
