@@ -1,12 +1,12 @@
-package com.surenot.raytracer;
+package com.surenot.raytracer.primitives;
 
 /**
  * Created by m.clauss on 1/12/2016.
  */
-public final class Dimension {
+public final class Dimension2D {
     private final double x, y;
 
-    public Dimension(final double x, final double y){
+    public Dimension2D(final double x, final double y){
         this.x = x;
         this.y = y;
     }
@@ -24,7 +24,7 @@ public final class Dimension {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Dimension dimension = (Dimension) o;
+        Dimension2D dimension = (Dimension2D) o;
 
         if (Double.compare(dimension.x, x) != 0) return false;
         return Double.compare(dimension.y, y) == 0;

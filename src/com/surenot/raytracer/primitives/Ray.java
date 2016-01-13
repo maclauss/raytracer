@@ -1,4 +1,4 @@
-package com.surenot.raytracer;
+package com.surenot.raytracer.primitives;
 
 public final class Ray {
     private final Point3D origin;
@@ -14,9 +14,19 @@ public final class Ray {
         else this.vector = new Point3D(x / length, y / length, z / length);
     }
 
-    public Point3D getOrigin() { return origin; }
+    public Point3D getOrigin() {
+        return origin;
+    }
 
     public Point3D getVector() {
         return vector;
+    }
+
+    @Override
+    public String toString() {
+        return "Ray{" +
+                "origin=" + origin +
+                ", vector=" + vector +
+                '}';
     }
 }

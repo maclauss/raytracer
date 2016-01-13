@@ -1,7 +1,11 @@
 package com.surenot.raytracer;
 
+import com.surenot.raytracer.primitives.Dimension2D;
+import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.shapes.Shape3D;
+import com.surenot.raytracer.shapes.Sphere3D;
+
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -11,15 +15,17 @@ import java.util.Collection;
 public class GUI extends JFrame {
 
     public static void main(String[] args){
-        Point3D observer = new Point3D(0, 2, 1.80);
-        Point3D screenOrigin = new Point3D(5, 0, 4);
-        Dimension screenDimension = new Dimension(3, 4);
+        Point3D observer = new Point3D(0, 0, 1.5);
+        Point3D screenOrigin = new Point3D(5, -2, 3);
+        Dimension2D screenDimension = new Dimension2D(3, 4);
         java.awt.Dimension screenPixelCount = new java.awt.Dimension(800, 600);
 
-        Collection<Object3D> objects = new ArrayList();
-        objects.add(new Sphere3D(new Point3D(10, 0, 0), 3));
+        Collection<Shape3D> objects = new ArrayList();
+        objects.add(new Sphere3D(new Point3D(20, 0, 1.5), 2));
+        objects.add(new Sphere3D(new Point3D(22, 3.5, 2.5), 2));
+        objects.add(new Sphere3D(new Point3D(12, 3.5, 1), 2));
 
-        Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getWidth(), (int)screenPixelCount.getHeight(), objects);
+        Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects);
 
         JFrame frame = new JFrame();
         ImageIcon icon = new ImageIcon(scene.render());
