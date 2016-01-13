@@ -9,14 +9,16 @@ public final class Sphere3D implements Shape3D {
 
     private final Point3D center;
     private final double radius;
+    private final int color;
 
-    public Sphere3D(final Point3D center, final double radius){
+    public Sphere3D(final Point3D center, final double radius, final int color){
         this.center = center;
         this.radius = radius;
+        this.color = color;
     }
 
     @Override
-    public boolean isHit(Ray ray){
+    public double isHit(Ray ray){
         Point3D no = ray.getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
         double a = 1; //ray.getVector().scalarProduct(ray.getVector());
@@ -25,12 +27,21 @@ public final class Sphere3D implements Shape3D {
 
         double d = Math.pow(b, 2) - 4 * a * c;
 
-        return d >= 0;
+        if ( d < 0 ) return Double.NaN;
+
+        // TODO interesting to check if the VM optimise this (Wild guess: yes)
+        double t0 = (-b + Math.sqrt(d)) / 2 * a;
+        double t1 = (-b - Math.sqrt(d)) / 2 * a;
+
+        if ( t0 < 0 ) {
+            return t1 < 0 ? Double.NaN : t1;
+        }
+        return t1 < 0 ? t0 : Math.min(t0, t1);
     }
 
     @Override
     public int getColor() {
-        return Color.RED.getRGB();
+        return color;
     }
 
     @Override

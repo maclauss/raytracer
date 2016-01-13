@@ -66,11 +66,15 @@ public final class Scene {
         BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
         for ( int i = 0; i < screen.length; i++ ){
             for ( int j = 0; j < screen[0].length; j++ ){
+                Ray ray = new Ray(observer, screen[i][j]);
+                // TODO Add a background image and take the color of the pixel at pos i, j as default
                 int color = Color.BLACK.getRGB();
-                Ray ray = new Ray(observer, screen[i][j])
+                double impactDistance = Double.MAX_VALUE;;
                 for ( Shape3D object : objects ){
+                    double currentImpactDistance = Double.MAX_VALUE;
                     // TODO cache the rays in an array, normalization is expensive
-                    if ( object.isHit(ray) ){
+                    if ( (currentImpactDistance = object.isHit(ray)) != Double.NaN && currentImpactDistance < impactDistance ){
+                        impactDistance = currentImpactDistance;
                         color = object.getColor();
                     }
                 }
