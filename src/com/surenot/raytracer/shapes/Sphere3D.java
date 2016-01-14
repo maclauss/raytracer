@@ -1,8 +1,7 @@
 package com.surenot.raytracer.shapes;
 
+import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
-import com.surenot.raytracer.primitives.Ray;
-import com.surenot.raytracer.primitives.RayImpact;
 import com.surenot.raytracer.primitives.Vector3D;
 
 public final class Sphere3D implements Shape3D {
@@ -12,8 +11,8 @@ public final class Sphere3D implements Shape3D {
     private final double r2;
     private final int color;
 
-    public Sphere3D(final Point3D center, final double radius, final int color){
-        if ( center == null ){
+    public Sphere3D(final Point3D center, final double radius, final int color) {
+        if (center == null) {
             throw new IllegalArgumentException();
         }
         this.center = center;
@@ -23,33 +22,33 @@ public final class Sphere3D implements Shape3D {
     }
 
     @Override
-    public RayImpact isHit(Ray ray){
+    public Impact3D isHit(final Vector3D ray) {
         // Origin - center as we use the normalized ray vector
-        Point3D no = ray.getVector().getOrigin().substract(center);
+        Point3D no = ray.getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
-        double a = 1; //ray.getVector().scalarProduct(ray.getVector());
-        double b = 2 * ray.getVector().normalize().scalarProduct(no);
+        double a = 1;
+        double b = 2 * ray.normalize().scalarProduct(no);
         double c = no.scalarProduct(no) - r2;
 
         double d = Math.pow(b, 2) - 4 * a * c;
 
-        if ( d < 0 ) return RayImpact.NONE;
+        if (d < 0) return Impact3D.NONE;
 
         // TODO interesting to check if the VM optimise this (Wild guess: yes)
         double t0 = (-b + Math.sqrt(d)) / 2 * a;
         double t1 = (-b - Math.sqrt(d)) / 2 * a;
 
         double impactDistance;
-        if ( t0 < 0 ) {
+        if (t0 < 0) {
             impactDistance = t1 < 0 ? Double.NaN : t1;
         } else {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
-        return Double.isNaN(impactDistance) ? RayImpact.NONE : new RayImpact(ray.getVector(), ray.getVector().normalize().multiply(impactDistance).add(ray.getVector().getOrigin()), this, impactDistance);
+        return Double.isNaN(impactDistance) ? Impact3D.NONE : new Impact3D(ray, ray.normalize().multiply(impactDistance).add(ray.getOrigin()), this, impactDistance);
     }
 
     @Override
-    public Vector3D getNormal(Point3D p) {
+    public Vector3D getNormal(final Point3D p) {
         return new Vector3D(center, p);
     }
 

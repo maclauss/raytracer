@@ -18,7 +18,7 @@ import java.util.concurrent.Semaphore;
  */
 public class GUI extends JFrame {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         final JFrame frame = new JFrame();
         final JLabel imageLabel = new JLabel();
 
@@ -28,7 +28,7 @@ public class GUI extends JFrame {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Semaphore sem = new Semaphore(1);
-        for ( int i = 0; ; i+=5 ){
+        for (int i = 0; ; i += 5) {
             final long start = System.currentTimeMillis();
             try {
                 sem.acquire();
@@ -57,9 +57,9 @@ public class GUI extends JFrame {
                     0.2, Color.WHITE.getRGB())));
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
-                        -Math.cos(Math.toRadians(theta)) * 8 + 20,
-                        Math.sin(Math.toRadians(theta)) * 8,
-                        0),
+                            -Math.cos(Math.toRadians(theta)) * 8 + 20,
+                            Math.sin(Math.toRadians(theta)) * 8,
+                            0),
                     1, Color.WHITE.getRGB())));
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
@@ -67,7 +67,7 @@ public class GUI extends JFrame {
                             0,
                             Math.sin(Math.toRadians(theta)) * 8),
                     1, Color.WHITE.getRGB())));
-            final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)frame.getSize().getHeight(), (int)frame.getSize().getWidth(), objects);
+            final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int) frame.getSize().getHeight(), (int) frame.getSize().getWidth(), objects);
             SwingUtilities.invokeLater(() -> {
                 BufferedImage bi = scene.render();
                 imageLabel.setIcon(new ImageIcon(bi));

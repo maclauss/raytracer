@@ -5,21 +5,21 @@ import com.surenot.raytracer.shapes.Shape3D;
 /**
  * Created by m.clauss on 1/13/2016.
  */
-public class RayImpact {
+public class Impact3D {
 
-    public static final RayImpact NONE = new RayImpact(null, null, null, Double.POSITIVE_INFINITY);
+    public static final Impact3D NONE = new Impact3D(null, null, null, Double.POSITIVE_INFINITY);
 
     private final Vector3D vector;
     private final Point3D impact;
     private final Shape3D object;
     private final double distance;
-    private double squareDistance = Double.MAX_VALUE;
+    private double squareDistance = Double.POSITIVE_INFINITY;
 
-    public RayImpact(final Vector3D vector, final Point3D impact, final Shape3D object, final double distance){
-        if ( (vector == null || impact == null || object == null) && NONE != null ){
+    public Impact3D(final Vector3D vector, final Point3D impact, final Shape3D object, final double distance) {
+        if ((vector == null || impact == null || object == null) && NONE != null) {
             throw new IllegalArgumentException();
         }
-        if ( impact != null && impact.getX() == Double.NaN ){
+        if (impact != null && Double.isNaN(impact.getX())) {
             System.out.println("wtf");
         }
         this.vector = vector;
@@ -28,7 +28,7 @@ public class RayImpact {
         this.distance = distance;
     }
 
-    public Point3D getImpact() {
+    public Point3D getPoint() {
         return impact;
     }
 
@@ -41,7 +41,7 @@ public class RayImpact {
     }
 
     public double getSquareDistance() {
-        return squareDistance == Double.MAX_VALUE ?
+        return squareDistance == Double.POSITIVE_INFINITY ?
                 squareDistance = Math.pow(distance, 2) :
                 squareDistance;
     }
@@ -51,11 +51,11 @@ public class RayImpact {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        RayImpact rayImpact = (RayImpact) o;
+        Impact3D impact = (Impact3D) o;
 
-        if (Double.compare(rayImpact.distance, distance) != 0) return false;
-        if (impact != null ? !impact.equals(rayImpact.impact) : rayImpact.impact != null) return false;
-        return object != null ? object.equals(rayImpact.object) : rayImpact.object == null;
+        if (Double.compare(impact.distance, distance) != 0) return false;
+        if (this.impact != null ? !this.impact.equals(impact.impact) : impact.impact != null) return false;
+        return object != null ? object.equals(impact.object) : impact.object == null;
 
     }
 
@@ -72,7 +72,7 @@ public class RayImpact {
 
     @Override
     public String toString() {
-        return "RayImpact{" +
+        return "Impact3D{" +
                 "vector=" + vector +
                 ", impact=" + impact +
                 ", object=" + object +

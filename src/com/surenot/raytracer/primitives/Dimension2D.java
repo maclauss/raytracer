@@ -7,7 +7,7 @@ public final class Dimension2D {
 
     private final double x, y;
 
-    public Dimension2D(final double x, final double y){
+    public Dimension2D(final double x, final double y) {
         this.x = x;
         this.y = y;
     }

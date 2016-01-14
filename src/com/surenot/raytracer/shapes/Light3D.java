@@ -1,27 +1,26 @@
 package com.surenot.raytracer.shapes;
 
+import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
-import com.surenot.raytracer.primitives.Ray;
-import com.surenot.raytracer.primitives.RayImpact;
 import com.surenot.raytracer.primitives.Vector3D;
 
 public final class Light3D implements Shape3D {
 
     private final Shape3D shape;
 
-    public Light3D(Shape3D shape){
-        if ( shape == null ){
+    public Light3D(Shape3D shape) {
+        if (shape == null) {
             throw new IllegalArgumentException();
         }
         this.shape = shape;
     }
 
     @Override
-    public RayImpact isHit(final Ray ray){
-        RayImpact impact = shape.isHit(ray);
-        return impact.equals(RayImpact.NONE) ?
-                RayImpact.NONE :
-                new RayImpact(ray.getVector(), impact.getImpact(), this, impact.getDistance());
+    public Impact3D isHit(final Vector3D ray) {
+        Impact3D impact = shape.isHit(ray);
+        return impact.equals(Impact3D.NONE) ?
+                Impact3D.NONE :
+                new Impact3D(ray, impact.getPoint(), this, impact.getDistance());
     }
 
     @Override

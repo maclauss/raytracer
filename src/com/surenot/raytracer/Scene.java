@@ -1,8 +1,9 @@
 package com.surenot.raytracer;
 
-import com.sun.javafx.UnmodifiableArrayList;
-import com.sun.javafx.collections.UnmodifiableListSet;
-import com.surenot.raytracer.primitives.*;
+import com.surenot.raytracer.primitives.Dimension2D;
+import com.surenot.raytracer.primitives.Impact3D;
+import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Vector3D;
 import com.surenot.raytracer.shapes.Light3D;
 import com.surenot.raytracer.shapes.Shape3D;
 
@@ -10,9 +11,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public final class Scene {
@@ -36,21 +34,17 @@ public final class Scene {
     public final static double AMBIENT_LIGHT = 0.1;
     public final static double DIFFUSED_LIGHT = 1 - AMBIENT_LIGHT;
 
-    private final static ExecutorService executor = Executors.newFixedThreadPool(4);
-
-    private final Point3D observer;
-    private final Point3D origin;
-    private final Dimension2D screenSize;
-    private final Ray[][] screen;
-    private final Collection<Shape3D> objects;
+    private final Collection<Ray> newScreen;
+    private final Collection<Shape3D> shapes;
     private final Collection<Light3D> lights;
+    private final BufferedImage image;
 
     public Scene(final Point3D observer,
                  final Point3D origin,
                  final Dimension2D screenSize,
                  final int pixelCountX, final int pixelCountY,
-                 final Collection<Shape3D> objects) {
-        if (observer == null || origin == null || screenSize == null || objects == null) {
+                 final Collection<Shape3D> shapes) {
+        if (observer == null || origin == null || screenSize == null || shapes == null) {
             throw new IllegalArgumentException();
         }
         if (screenSize.getX() <= 0) throw new IllegalArgumentException();
@@ -58,12 +52,10 @@ public final class Scene {
         if (pixelCountX <= 0) throw new IllegalArgumentException();
         if (pixelCountY <= 0) throw new IllegalArgumentException();
 
-        this.observer = observer;
-        this.origin = origin;
-        this.screenSize = screenSize;
-        this.screen = new Ray[pixelCountY][pixelCountX];
-        this.objects = new CopyOnWriteArrayList<>(objects);
-        this.lights = new CopyOnWriteArrayList<>(objects.stream()
+        this.image = new BufferedImage(pixelCountY, pixelCountX, BufferedImage.TYPE_INT_RGB);
+        this.newScreen = new ArrayList<>(pixelCountX * pixelCountY);
+        this.shapes = new ArrayList<>(shapes);
+        this.lights = new ArrayList<>(shapes.stream()
                 .filter((shape) -> shape instanceof Light3D)
                 .map(light -> (Light3D) light)
                 .collect(Collectors.toList()));
@@ -72,46 +64,40 @@ public final class Scene {
         double pixelSizeZ = screenSize.getY() / pixelCountY;
         for (int i = 0; i < pixelCountY; i++) {
             for (int j = 0; j < pixelCountX; j++) {
-                screen[i][j] = new Ray(new Vector3D(observer, new Point3D(origin.getX(), origin.getY() + i * pixelSizeY, origin.getZ() - j * pixelSizeZ)));
+                newScreen.add(new Ray(i, j, new Vector3D(observer,
+                        new Point3D(origin.getX(), origin.getY() + i * pixelSizeY, origin.getZ() - j * pixelSizeZ))));
             }
         }
     }
 
     public BufferedImage render() {
-        BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < screen.length; i++) {
-            for (int j = 0; j < screen[0].length; j++) {
-                Ray ray = screen[i][j];
-                int color = computeColor(ray);
-                bi.setRGB(i, j, color);
-            }
-        }
-        return bi;
+        newScreen.parallelStream().forEach(ray -> image.setRGB(ray.getX(), ray.getY(), computeColor(ray.getVector())));
+        return image;
     }
 
-    private int computeColor(final Ray ray) {
+    private int computeColor(final Vector3D v) {
         // TODO Expensive computation, spend some time to optimise
-        RayImpact impact = objects.stream()
-                //.filter // TODO Find a heuristic to remove objects for which we know they will not be hit
-                .map(shape -> shape.isHit(ray))
-                .filter(ri -> !ri.equals(RayImpact.NONE))
-                .reduce(RayImpact.NONE, (a, b) -> a.getDistance() < b.getDistance() ? a : b);
+        Impact3D impact = shapes.stream()
+                //.filter // TODO Find a heuristic to remove shapes for which we know they will not be hit
+                .map(shape -> shape.isHit(v))
+                .filter(ri -> !ri.equals(Impact3D.NONE))
+                .reduce(Impact3D.NONE, (a, b) -> a.getDistance() < b.getDistance() ? a : b);
 
-        if (impact.equals(RayImpact.NONE)) return Color.BLACK.getRGB();
+        if (impact.equals(Impact3D.NONE)) return Color.BLACK.getRGB();
         if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
 
-        Vector3D normal = impact.getImpactedObject().getNormal(impact.getImpact());
+        Vector3D normal = impact.getImpactedObject().getNormal(impact.getPoint());
         // TODO Quadratic to be replaced if possible
         double dLight = lights.stream()
                 .map(light -> {
-                    Vector3D lightVector = new Vector3D(light.getCenter(), impact.getImpact());
-                    double sqd = lightVector.getOrigin().squareDistance(impact.getImpact());
-                    if ( objects.stream()
+                    Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint());
+                    double sqd = lightVector.getOrigin().squareDistance(impact.getPoint());
+                    if (shapes.stream()
                             .filter(shape -> shape != light && shape != impact.getImpactedObject())
-                            .map(shape -> shape.isHit(new Ray(lightVector)))
-                            .anyMatch(ri -> !ri.equals(RayImpact.NONE) &&
-                                    !ri.getImpact().equals(impact.getImpactedObject()) &&
-                                    ri.getSquareDistance() < sqd) ) return 0.0;
+                            .map(shape -> shape.isHit(lightVector))
+                            .anyMatch(ri -> !ri.equals(Impact3D.NONE) &&
+                                    !ri.getPoint().equals(impact.getImpactedObject()) &&
+                                    ri.getSquareDistance() < sqd)) return 0.0;
 
                     double theta = -normal.normalize().scalarProduct(lightVector.normalize());
                     return theta < 0 ? 0 : DIFFUSED_LIGHT * theta;
@@ -127,18 +113,18 @@ public final class Scene {
     }
 
     // I keep this because it is somehow faster than the stream example...
-    private int computeColor2(final Ray ray) {
+    private int computeColor2(final Vector3D v) {
         // FIXME Too expensive computation, find a way to optimize (too many normalizations etc)
-        RayImpact impact = getClosestImpact(ray, objects);
+        Impact3D impact = getClosestImpact(v, shapes);
 
-        if (impact.equals(RayImpact.NONE)) return Color.BLACK.getRGB();
+        if (impact.equals(Impact3D.NONE)) return Color.BLACK.getRGB();
         if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
 
-        Vector3D normal = impact.getImpactedObject().getNormal(impact.getImpact());
+        Vector3D normal = impact.getImpactedObject().getNormal(impact.getPoint());
         double dLight = 0;
         for (Shape3D light : lights) {
-            Vector3D lightVector = new Vector3D(light.getCenter(), impact.getImpact());
-            if (isBlocked(lightVector, impact.getImpact(), objects, light, impact.getImpactedObject())) {
+            Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint());
+            if (isBlocked(lightVector, impact.getPoint(), shapes, light, impact.getImpactedObject())) {
                 continue;
             }
             // TODO Add power to light sources and ponderate with the distance |(light - impact)|
@@ -154,12 +140,12 @@ public final class Scene {
         return color.getRGB();
     }
 
-    private RayImpact getClosestImpact(Ray ray, Collection<Shape3D> objects) {
-        RayImpact impact = RayImpact.NONE;
+    private Impact3D getClosestImpact(final Vector3D v, final Collection<Shape3D> objects) {
+        Impact3D impact = Impact3D.NONE;
         for (Shape3D object : objects) {
-            RayImpact currentImpact;
-            if ((currentImpact = object.isHit(ray)) != RayImpact.NONE &&
-                impact.equals(RayImpact.NONE) || currentImpact.getDistance() < impact.getDistance()) {
+            Impact3D currentImpact;
+            if ((currentImpact = object.isHit(v)) != Impact3D.NONE &&
+                    impact.equals(Impact3D.NONE) || currentImpact.getDistance() < impact.getDistance()) {
                 impact = currentImpact;
             }
         }
@@ -176,13 +162,68 @@ public final class Scene {
             if (shape == sourceObject) continue;
             // TODO This solves some double accuracy issues, but will cause problems with complex shapes
             if (shape == impactedObject) continue;
-            RayImpact ri = shape.isHit(new Ray(v));
-            if (!ri.equals(RayImpact.NONE)) {
-                if (!ri.getImpact().equals(p) && ri.getSquareDistance() < sqd) {
+            Impact3D ri = shape.isHit(v);
+            if (!ri.equals(Impact3D.NONE)) {
+                if (!ri.getPoint().equals(p) && ri.getSquareDistance() < sqd) {
                     return true;
                 }
             }
         }
         return false;
+    }
+}
+
+class Ray {
+
+    private final int x;
+    private final int y;
+    private final Vector3D v;
+
+    public Ray(int x, int y, Vector3D v){
+        this.x = x;
+        this.y = y;
+        this.v = v;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public Vector3D getVector() {
+        return v;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Ray ray = (Ray) o;
+
+        if (x != ray.x) return false;
+        if (y != ray.y) return false;
+        return !(v != null ? !v.equals(ray.v) : ray.v != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = x;
+        result = 31 * result + y;
+        result = 31 * result + (v != null ? v.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Ray{" +
+                "x=" + x +
+                ", y=" + y +
+                ", vector=" + v +
+                '}';
     }
 }

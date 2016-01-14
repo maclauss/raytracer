@@ -1,8 +1,7 @@
 package com.surenot.raytracer.shapes;
 
 import com.surenot.raytracer.primitives.Point3D;
-import com.surenot.raytracer.primitives.Ray;
-import com.surenot.raytracer.primitives.RayImpact;
+import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Vector3D;
 
 /**
@@ -10,7 +9,7 @@ import com.surenot.raytracer.primitives.Vector3D;
  */
 public interface Shape3D {
 
-    RayImpact isHit(Ray ray);
+    Impact3D isHit(Vector3D ray);
     Vector3D getNormal(Point3D p);
     Point3D getCenter();
     int getColor();
