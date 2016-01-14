@@ -75,27 +75,12 @@ public final class Scene {
 
     public BufferedImage render(){
         BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
-
-        final CountDownLatch latch = new CountDownLatch(400 * 300);
-
         for ( int i = 0; i < screen.length; i++ ){
             for ( int j = 0; j < screen[0].length; j++ ){
-                final int x = i, y = j;
-                // TODO Why is the executor slower than single threaded execution...
-                //executor.submit(() -> {
-                    Ray ray = screen[x][y];
-                    int color = computeColor(ray);
-                    synchronized (bi) {
-                        bi.setRGB(x, y, color);
-                    }
-                    latch.countDown();
-                //});
+                Ray ray = screen[i][j];
+                int color = computeColor(ray);
+                bi.setRGB(i, j, color);
             }
-        }
-        try{
-            latch.await();
-        } catch(InterruptedException ie){
-            ie.printStackTrace();
         }
         return bi;
     }
