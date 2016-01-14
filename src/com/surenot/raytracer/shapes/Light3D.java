@@ -21,12 +21,17 @@ public final class Light3D implements Shape3D {
         RayImpact impact = shape.isHit(ray);
         return impact.equals(RayImpact.NONE) ?
                 RayImpact.NONE :
-                new RayImpact(impact.getImpact(), this, impact.getDistance());
+                new RayImpact(ray.getVector(), impact.getImpact(), this, impact.getDistance());
     }
 
     @Override
     public Vector3D getNormal(final Point3D p) {
         return shape.getNormal(p);
+    }
+
+    @Override
+    public Point3D getCenter() {
+        return shape.getCenter();
     }
 
     @Override

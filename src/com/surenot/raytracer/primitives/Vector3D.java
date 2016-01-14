@@ -90,4 +90,14 @@ public class Vector3D {
         result = 31 * result + direction.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Vector3D{" +
+                "origin=" + origin +
+                ", direction=" + direction +
+                ", normalized=" + normalized +
+                ", length=" + length +
+                '}';
+    }
 }

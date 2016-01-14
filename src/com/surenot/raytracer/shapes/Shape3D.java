@@ -12,6 +12,7 @@ public interface Shape3D {
 
     RayImpact isHit(Ray ray);
     Vector3D getNormal(Point3D p);
+    Point3D getCenter();
     int getColor();
 
 }

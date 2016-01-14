@@ -45,14 +45,14 @@ public final class Scene {
                  final Point3D origin,
                  final Dimension2D screenSize,
                  final int pixelCountX, final int pixelCountY,
-                 final Collection<Shape3D> objects){
-        if ( observer == null || origin == null || screenSize == null || objects == null ){
+                 final Collection<Shape3D> objects) {
+        if (observer == null || origin == null || screenSize == null || objects == null) {
             throw new IllegalArgumentException();
         }
-        if ( screenSize.getX() <= 0 ) throw new IllegalArgumentException();
-        if ( screenSize.getY() <= 0 ) throw new IllegalArgumentException();
-        if ( pixelCountX <= 0 ) throw new IllegalArgumentException();
-        if ( pixelCountY <= 0 ) throw new IllegalArgumentException();
+        if (screenSize.getX() <= 0) throw new IllegalArgumentException();
+        if (screenSize.getY() <= 0) throw new IllegalArgumentException();
+        if (pixelCountX <= 0) throw new IllegalArgumentException();
+        if (pixelCountY <= 0) throw new IllegalArgumentException();
 
         this.observer = observer;
         this.origin = origin;
@@ -62,22 +62,22 @@ public final class Scene {
         this.lights = new ArrayList();
         objects.forEach((shape) -> {
             this.objects.add(shape);
-            if ( shape instanceof Light3D) this.lights.add((Light3D)shape);
+            if (shape instanceof Light3D) this.lights.add((Light3D) shape);
         });
 
         double pixelSizeY = screenSize.getX() / pixelCountX;
         double pixelSizeZ = screenSize.getY() / pixelCountY;
-        for ( int i = 0; i < pixelCountY; i++ ){
-            for ( int j = 0; j < pixelCountX; j++ ){
+        for (int i = 0; i < pixelCountY; i++) {
+            for (int j = 0; j < pixelCountX; j++) {
                 screen[i][j] = new Ray(new Vector3D(observer, new Point3D(origin.getX(), origin.getY() + i * pixelSizeY, origin.getZ() - j * pixelSizeZ)));
             }
         }
     }
 
-    public BufferedImage render(){
+    public BufferedImage render() {
         BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
-        for ( int i = 0; i < screen.length; i++ ){
-            for ( int j = 0; j < screen[0].length; j++ ){
+        for (int i = 0; i < screen.length; i++) {
+            for (int j = 0; j < screen[0].length; j++) {
                 Ray ray = screen[i][j];
                 int color = computeColor(ray);
                 bi.setRGB(i, j, color);
@@ -86,34 +86,36 @@ public final class Scene {
         return bi;
     }
 
-    private int computeColor(final Ray ray){
+    private int computeColor(final Ray ray) {
         // TODO Add a background texture and take the color hit by the ray as default
         Color color = Color.BLACK;
         // FIXME Too expensive computation, find a way to optimize (too many normalizations etc)
         RayImpact impact = getClosestImpact(ray, objects);
-        if ( impact.equals(RayImpact.NONE)) return color.getRGB(); // No impact: return background color
+        if (impact.equals(RayImpact.NONE)) return color.getRGB(); // No impact: return background color
         Shape3D object = impact.getObject();
         color = new Color(object.getColor());
-        if ( object.getClass() == Light3D.class ) {
-            return color.getRGB(); // First object impacted is a light: return light color
-        }
+        if (object.getClass() == Light3D.class) return color.getRGB();
         Vector3D normal = object.getNormal(impact.getImpact());
         double diffusedLight = 0;
-        for ( Shape3D light : lights){
-            Vector3D lightVector = light.getNormal(impact.getImpact());
+        for (Shape3D light : lights) {
+            Vector3D lightVector = new Vector3D(light.getCenter(), impact.getImpact());
+            if (isBlocked(lightVector, impact.getImpact(), objects, light)) {
+                continue;
+            }
             // TODO Add power to light sources and ponderate with the distance |(light - impact)|
             double theta = -normal.normalize().scalarProduct(lightVector.normalize());
             diffusedLight = Math.min(DIFFUSED_LIGHT, diffusedLight + (theta < 0 ? 0 : DIFFUSED_LIGHT * theta));
+            if (diffusedLight == DIFFUSED_LIGHT) break;
         }
-        color = new Color((int)(color.getRed() * (AMBIENT_LIGHT + diffusedLight)),
-                (int)(color.getGreen() * (AMBIENT_LIGHT + diffusedLight)),
-                (int)(color.getBlue() * (AMBIENT_LIGHT + diffusedLight)));
+        color = new Color((int) (color.getRed() * (AMBIENT_LIGHT + diffusedLight)),
+                (int) (color.getGreen() * (AMBIENT_LIGHT + diffusedLight)),
+                (int) (color.getBlue() * (AMBIENT_LIGHT + diffusedLight)));
         return color.getRGB();
     }
 
-    private RayImpact getClosestImpact(Ray ray, Collection<Shape3D> objects){
+    private RayImpact getClosestImpact(Ray ray, Collection<Shape3D> objects) {
         RayImpact impact = RayImpact.NONE;
-        for ( Shape3D object : objects ) {
+        for (Shape3D object : objects) {
             RayImpact currentImpact;
             if ((currentImpact = object.isHit(ray)) != RayImpact.NONE &&
                     impact.equals(RayImpact.NONE) || currentImpact.getDistance() < impact.getDistance()) {
@@ -121,5 +123,23 @@ public final class Scene {
             }
         }
         return impact;
+    }
+
+    private static boolean isBlocked(final Vector3D v,
+                                     final Point3D p,
+                                     final Collection<Shape3D> c,
+                                     final Shape3D sourceObject) {
+        double sqd = v.getOrigin().squareDistance(p);
+        for (Shape3D shape : c) {
+            if (shape == sourceObject) continue;
+            RayImpact ri = shape.isHit(new Ray(v));
+            if (!ri.equals(RayImpact.NONE)) {
+                double impactDistance = ri.getSquareDistance();
+                if (ri.getSquareDistance() < sqd) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

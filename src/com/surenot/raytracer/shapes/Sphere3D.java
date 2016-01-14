@@ -45,12 +45,17 @@ public final class Sphere3D implements Shape3D {
         } else {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
-        return impactDistance == Double.NaN ? RayImpact.NONE : new RayImpact(ray.getVector().normalize().multiply(impactDistance), this, impactDistance);
+        return Double.isNaN(impactDistance) ? RayImpact.NONE : new RayImpact(ray.getVector(), ray.getVector().normalize().multiply(impactDistance), this, impactDistance);
     }
 
     @Override
     public Vector3D getNormal(Point3D p) {
         return new Vector3D(center, p);
+    }
+
+    @Override
+    public Point3D getCenter() {
+        return center;
     }
 
     @Override

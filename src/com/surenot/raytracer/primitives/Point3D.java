@@ -6,7 +6,10 @@ public final class Point3D {
 
     private final double x, y, z;
 
-    public Point3D(final double x, final double y, final double z){
+    public Point3D(final double x, final double y, final double z) {
+        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) {
+            throw new NumberFormatException();
+        }
         this.x = x;
         this.y = y;
         this.z = z;
@@ -16,21 +19,37 @@ public final class Point3D {
         return x;
     }
 
-    public double getY() { return y; }
+    public double getY() {
+        return y;
+    }
 
-    public double getZ() { return z; }
+    public double getZ() {
+        return z;
+    }
 
-    public Point3D multiply(double a){
+    public Point3D multiply(double a) {
         return new Point3D(x * a, y * a, z * a);
     }
 
-    public Point3D substract(Point3D p){
-        if ( p == null ) throw new IllegalArgumentException();
+    public Point3D substract(Point3D p) {
+        if (p == null) throw new IllegalArgumentException();
         return new Point3D(x - p.getX(), y - p.getY(), z - p.getZ());
     }
 
-    public double scalarProduct(Point3D p){
+    public double scalarProduct(Point3D p) {
         return x * p.getX() + y * p.getY() + z * p.getZ();
+    }
+
+    public double distance(Point3D p) {
+        return Math.sqrt(Math.pow(x - p.getX(), 2) +
+                Math.pow(y - p.getY(), 2) +
+                Math.pow(z - p.getZ(), 2));
+    }
+
+    public double squareDistance(Point3D p) {
+        return Math.pow(x - p.getX(), 2) +
+                Math.pow(y - p.getY(), 2) +
+                Math.pow(z - p.getZ(), 2);
     }
 
     @Override
