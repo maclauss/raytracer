@@ -42,9 +42,10 @@ public final class Sphere3D implements Shape3D {
         double impactDistance;
         if ( t0 < 0 ) {
             impactDistance = t1 < 0 ? Double.NaN : t1;
+        } else {
+            impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
-        impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
-        return new RayImpact(ray.getVector().normalize().multiply(impactDistance), this, impactDistance);
+        return impactDistance == Double.NaN ? RayImpact.NONE : new RayImpact(ray.getVector().normalize().multiply(impactDistance), this, impactDistance);
     }
 
     @Override
