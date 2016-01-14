@@ -1,13 +1,13 @@
 package com.surenot.raytracer;
 
 import com.surenot.raytracer.primitives.*;
+import com.surenot.raytracer.shapes.Light3D;
 import com.surenot.raytracer.shapes.Shape3D;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,7 +39,7 @@ public final class Scene {
     private final Dimension2D screenSize;
     private final Ray[][] screen;
     private final Collection<Shape3D> objects;
-    private final Collection<Point3D> lights;
+    private final Collection<Light3D> lights;
 
     public Scene(final Point3D observer,
                  final Point3D origin,
@@ -60,9 +60,11 @@ public final class Scene {
         this.screenSize = screenSize;
         this.screen = new Ray[pixelCountY][pixelCountX];
         this.objects = new ArrayList(objects.size());
-        this.lights = new ArrayList(objects.size());
-        objects.forEach((shape) -> this.objects.add(shape));
-        lights.forEach((light) -> this.lights.add(light));
+        this.lights = new ArrayList();
+        objects.forEach((shape) -> {
+            this.objects.add(shape);
+            if ( shape instanceof Light3D) this.lights.add((Light3D)shape);
+        });
 
         double pixelSizeY = screenSize.getX() / pixelCountX;
         double pixelSizeZ = screenSize.getY() / pixelCountY;
@@ -90,15 +92,18 @@ public final class Scene {
         Color color = Color.BLACK;
         // FIXME Too expensive computation, find a way to optimize (too many normalizations etc)
         RayImpact impact = getClosestImpact(ray, objects);
-        if ( impact.equals(RayImpact.NONE)) return color.getRGB();
+        if ( impact.equals(RayImpact.NONE)) return color.getRGB(); // No impact: return background color
         Shape3D object = impact.getObject();
         color = new Color(object.getColor());
+        if ( object.getClass() == Light3D.class ) {
+            return color.getRGB(); // First object impacted is a light: return light color
+        }
         Vector3D normal = object.getNormal(impact.getImpact());
         double diffusedLight = 0;
-        for ( Point3D light : lights){
-            Vector3D lightVector = new Vector3D(impact.getImpact(), light);
+        for ( Shape3D light : lights){
+            Vector3D lightVector = light.getNormal(impact.getImpact());
             // TODO Add power to light sources and ponderate with the distance |(light - impact)|
-            double theta = normal.normalize().scalarProduct(lightVector.normalize());
+            double theta = -normal.normalize().scalarProduct(lightVector.normalize());
             diffusedLight = Math.min(DIFFUSED_LIGHT, diffusedLight + (theta < 0 ? 0 : DIFFUSED_LIGHT * theta));
         }
         color = new Color((int)(color.getRed() * (AMBIENT_LIGHT + diffusedLight)),

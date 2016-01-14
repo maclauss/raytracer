@@ -46,16 +46,19 @@ public class GUI extends JFrame {
             objects.add(new Sphere3D(new Point3D(18, 0.2, -0.5), 0.5, Color.GREEN.getRGB()));
             objects.add(new Sphere3D(new Point3D(24, 2.5, 0), 1.5, Color.GRAY.getRGB()));
             final Collection<Point3D> lights = new ArrayList();
-            final int theta1 = i % 360;
-            final int theta2 = i * 3 % 360;
-            objects.add(new Sphere3D(
+            final int theta = i % 360;
+            objects.add(new Light3D(new Sphere3D(
                     new Point3D(
-                        -Math.cos(Math.toRadians(theta1)) * 8 + 20,
-                        Math.sin(Math.toRadians(theta1)) * 8,
+                        -Math.cos(Math.toRadians(theta)) * 8 + 20,
+                        Math.sin(Math.toRadians(theta)) * 8,
                         0),
-                    1, Color.WHITE.getRGB()));
-            lights.add(new Point3D(-Math.cos(Math.toRadians(theta1)) * 75, Math.sin(Math.toRadians(theta1)) * 75, 75));
-            lights.add(new Point3D(-Math.cos(Math.toRadians(theta2)) * 75, 0, Math.sin(Math.toRadians(theta2)) * 75));
+                    1, Color.WHITE.getRGB())));
+            objects.add(new Light3D(new Sphere3D(
+                    new Point3D(
+                            Math.cos(Math.toRadians(theta)) * 8 + 20,
+                            0,
+                            Math.sin(Math.toRadians(theta)) * 8),
+                    1, Color.WHITE.getRGB())));
             final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)frame.getSize().getHeight(), (int)frame.getSize().getWidth(), objects, lights);
             SwingUtilities.invokeLater(() -> {
                 BufferedImage bi = scene.render();
