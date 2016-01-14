@@ -51,7 +51,7 @@ public class GUI extends JFrame {
             final int theta1 = i % 360;
             final int theta2 = i * 3 % 360;
             lights.add(new Point3D(-Math.cos(Math.toRadians(theta1)) * 75, Math.sin(Math.toRadians(theta1)) * 75, 75));
-            lights.add(new Point3D(-Math.cos(Math.toRadians(theta2)) * 75, 0, Math.sin(Math.toRadians(theta2)) * 75));
+            //lights.add(new Point3D(-Math.cos(Math.toRadians(theta2)) * 75, 0, Math.sin(Math.toRadians(theta2)) * 75));
             final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)screenPixelCount.getHeight(), (int)screenPixelCount.getWidth(), objects, lights);
             SwingUtilities.invokeLater(() -> {
                 BufferedImage bi = scene.render();

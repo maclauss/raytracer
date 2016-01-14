@@ -9,6 +9,7 @@ public class Vector3D {
 
     private final Point3D origin;
     private final Point3D direction;
+    private Point3D normalized = null;
     // Not final because its value can change from NaN to the real length to avoid costly computations,
     // however this doesn't impact the immutability of the class
     private double length;
@@ -62,8 +63,16 @@ public class Vector3D {
                 length;
     }
 
-    public boolean isNormalized(){
-        return origin.equals(Point3D.ORIGIN) && length < 1 + accuracy && length > 1 - accuracy;
+    public Point3D normalize(){
+        if ( normalized == null ){
+            double x = direction.getX() - origin.getX();
+            double y = direction.getY() - origin.getY();
+            double z = direction.getZ() - origin.getZ();
+            double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            if ( length == 1 ) normalized = new Point3D(x, y, z);
+            else normalized = new Point3D(x / length, y / length, z / length);
+        }
+        return normalized;
     }
 
     @Override

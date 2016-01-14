@@ -8,7 +8,7 @@ public final class Ray {
         if ( vector == null ){
             throw new IllegalArgumentException();
         }
-        this.vector = Vector3D.getNormalizedVector3D(vector);
+        this.vector = vector;
     }
 
     public Vector3D getVector() {

@@ -30,6 +30,7 @@ public final class Scene {
     */
 
     public final static double AMBIENT_LIGHT = 0.1;
+    public final static double DIFFUSED_LIGHT = 1 - AMBIENT_LIGHT;
 
     private final static ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -60,7 +61,6 @@ public final class Scene {
         this.screen = new Ray[pixelCountY][pixelCountX];
         this.objects = new ArrayList(objects.size());
         this.lights = new ArrayList(objects.size());
-        // Defensive copy to avoid reference leaks
         objects.forEach((shape) -> this.objects.add(shape));
         lights.forEach((light) -> this.lights.add(light));
 
@@ -103,7 +103,7 @@ public final class Scene {
     private int computeColor(final Ray ray){
         // TODO Add a background texture and take the color hit by the ray as default
         Color color = Color.BLACK;
-        // FIXME Too expensive computation
+        // FIXME Too expensive computation, find a way to optimize (too many normalizations etc)
         RayImpact impact = getClosestImpact(ray, objects);
         if ( impact.equals(RayImpact.NONE)) return color.getRGB();
         Shape3D object = impact.getObject();
@@ -112,9 +112,9 @@ public final class Scene {
         double diffusedLight = 0;
         for ( Point3D light : lights){
             Vector3D lightVector = new Vector3D(impact.getImpact(), light);
-            // TODO Add power to lightsources and ponderate with the distance |(light - impact)|
-            double theta = normal.scalarProduct(lightVector) / (normal.getLength() * lightVector.getLength());
-            diffusedLight = Math.min((1 - AMBIENT_LIGHT), diffusedLight + (theta < 0 ? 0 : (1 - AMBIENT_LIGHT) * theta));
+            // TODO Add power to light sources and ponderate with the distance |(light - impact)|
+            double theta = normal.normalize().scalarProduct(lightVector.normalize());
+            diffusedLight = Math.min(DIFFUSED_LIGHT, diffusedLight + (theta < 0 ? 0 : DIFFUSED_LIGHT * theta));
         }
         color = new Color((int)(color.getRed() * (AMBIENT_LIGHT + diffusedLight)),
                 (int)(color.getGreen() * (AMBIENT_LIGHT + diffusedLight)),
