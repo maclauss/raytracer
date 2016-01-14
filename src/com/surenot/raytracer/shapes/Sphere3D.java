@@ -5,21 +5,20 @@ import com.surenot.raytracer.primitives.Ray;
 import com.surenot.raytracer.primitives.RayImpact;
 import com.surenot.raytracer.primitives.Vector3D;
 
-import java.awt.*;
-import java.security.InvalidParameterException;
-
 public final class Sphere3D implements Shape3D {
 
     private final Point3D center;
     private final double radius;
+    private final double r2;
     private final int color;
 
     public Sphere3D(final Point3D center, final double radius, final int color){
         if ( center == null ){
-            throw new InvalidParameterException();
+            throw new IllegalArgumentException();
         }
         this.center = center;
         this.radius = radius;
+        this.r2 = Math.pow(radius, 2);
         this.color = color;
     }
 
@@ -28,8 +27,8 @@ public final class Sphere3D implements Shape3D {
         Point3D no = ray.getVector().getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
         double a = 1; //ray.getVector().scalarProduct(ray.getVector());
-        double b = 2 * ray.getVector().getDirection().scalarProduct(no);
-        double c = no.scalarProduct(no) - Math.pow(radius, 2);
+        double b = 2 * ray.getVector().scalarProduct(new Vector3D(no));
+        double c = no.scalarProduct(no) - r2;
 
         double d = Math.pow(b, 2) - 4 * a * c;
 
@@ -44,7 +43,7 @@ public final class Sphere3D implements Shape3D {
             impactDistance = t1 < 0 ? Double.NaN : t1;
         }
         impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
-        return new RayImpact(ray.getVector().multiply(impactDistance).getDirection(), impactDistance);
+        return new RayImpact(ray.getVector().multiply(impactDistance).getDirection(), this, impactDistance);
     }
 
     @Override

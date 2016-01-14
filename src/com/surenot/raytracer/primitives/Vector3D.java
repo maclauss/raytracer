@@ -1,7 +1,5 @@
 package com.surenot.raytracer.primitives;
 
-import java.security.InvalidParameterException;
-
 /**
  * Created by m.clauss on 1/13/2016.
  */
@@ -15,14 +13,22 @@ public class Vector3D {
     // however this doesn't impact the immutability of the class
     private double length;
 
+    public Vector3D(final Point3D direction){
+        this(Point3D.ORIGIN, direction);
+    }
+
     public Vector3D(final Point3D origin, final Point3D direction){
         if ( origin == null || direction == null ){
-            throw new InvalidParameterException();
+            throw new IllegalArgumentException();
         }
         this.origin = origin;
         this.direction = direction;
         // TODO try to replace with Double.NaN ?
         this.length = Double.MAX_VALUE;
+    }
+
+    public Vector3D substract(Vector3D v){
+        return new Vector3D(origin.substract(v.getOrigin()), direction.substract(v.getDirection()));
     }
 
     public Vector3D multiply(double x){

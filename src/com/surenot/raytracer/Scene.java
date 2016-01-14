@@ -5,11 +5,11 @@ import com.surenot.raytracer.shapes.Shape3D;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class Scene {
     /*
@@ -31,75 +31,106 @@ public final class Scene {
 
     public final static double AMBIENT_LIGHT = 0.1;
 
+    private final static ExecutorService executor = Executors.newFixedThreadPool(4);
+
     private final Point3D observer;
     private final Point3D origin;
     private final Dimension2D screenSize;
-    private final Vector3D[][] screen;
+    private final Ray[][] screen;
     private final Collection<Shape3D> objects;
-    private final Collection<Point3D> lightSources;
+    private final Collection<Point3D> lights;
 
-    public Scene(final Point3D observer, final Point3D origin,
-                 final Dimension2D screenSize, final int pixelCountX, final int pixelCountY,
+    public Scene(final Point3D observer,
+                 final Point3D origin,
+                 final Dimension2D screenSize,
+                 final int pixelCountX, final int pixelCountY,
                  final Collection<Shape3D> objects,
-                 final Collection<Point3D> lightSources){
-        if ( observer == null || origin == null || screenSize == null || objects == null || lightSources == null ){
-            throw new InvalidParameterException();
+                 final Collection<Point3D> lights){
+        if ( observer == null || origin == null || screenSize == null || objects == null || lights == null ){
+            throw new IllegalArgumentException();
         }
-        if ( screenSize.getX() <= 0 ) throw new InvalidParameterException();
-        if ( screenSize.getY() <= 0 ) throw new InvalidParameterException();
-        if ( pixelCountX <= 0 ) throw new InvalidParameterException();
-        if ( pixelCountY <= 0 ) throw new InvalidParameterException();
+        if ( screenSize.getX() <= 0 ) throw new IllegalArgumentException();
+        if ( screenSize.getY() <= 0 ) throw new IllegalArgumentException();
+        if ( pixelCountX <= 0 ) throw new IllegalArgumentException();
+        if ( pixelCountY <= 0 ) throw new IllegalArgumentException();
 
         this.observer = observer;
         this.origin = origin;
         this.screenSize = screenSize;
-        this.screen = new Vector3D[pixelCountY][pixelCountX];
-        // TODO defensive copy of the Collections to avoid reference leaks
-        this.objects = objects;
-        this.lightSources = lightSources;
+        this.screen = new Ray[pixelCountY][pixelCountX];
+        this.objects = new ArrayList(objects.size());
+        this.lights = new ArrayList(objects.size());
+        // Defensive copy to avoid reference leaks
+        objects.forEach((shape) -> this.objects.add(shape));
+        lights.forEach((light) -> this.lights.add(light));
 
+        double pixelSizeY = screenSize.getX() / pixelCountX;
+        double pixelSizeZ = screenSize.getY() / pixelCountY;
         for ( int i = 0; i < pixelCountY; i++ ){
             for ( int j = 0; j < pixelCountX; j++ ){
-                screen[i][j] = new Vector3D(observer, new Point3D(origin.getX(), origin.getY() + i * screenSize.getX() / pixelCountX, origin.getZ() - j * screenSize.getY() / pixelCountY));
+                screen[i][j] = new Ray(new Vector3D(observer, new Point3D(origin.getX(), origin.getY() + i * pixelSizeY, origin.getZ() - j * pixelSizeZ)));
             }
         }
-    }
-
-    public Scene addObject(Shape3D object){
-        Collection<Shape3D> objects = this.objects.stream().collect(Collectors.toCollection(ArrayList::new));
-        objects.add(object);
-        return new Scene(observer, origin, screenSize, screen.length, screen[0].length, objects, null);
     }
 
     public BufferedImage render(){
         BufferedImage bi = new BufferedImage(screen.length, screen[0].length, BufferedImage.TYPE_INT_RGB);
+
+        final CountDownLatch latch = new CountDownLatch(400 * 300);
+
         for ( int i = 0; i < screen.length; i++ ){
             for ( int j = 0; j < screen[0].length; j++ ){
-                // TODO cache the rays, normalization is expensive
-                Ray ray = new Ray(screen[i][j]);
-                // TODO Add a background image and take the color of the pixel at pos i, j as default
-                int color = Color.BLACK.getRGB();
-                RayImpact impact = RayImpact.NONE;
-                for ( Shape3D object : objects ){
-                    RayImpact currentImpact;
-                    if ( (currentImpact = object.isHit(ray)) != RayImpact.NONE &&
-                            impact.equals(RayImpact.NONE) || currentImpact.getDistance() < impact.getDistance() ){
-                        impact = currentImpact;
-                        color = object.getColor();
-                        Vector3D normal = object.getNormal(impact.getImpact());
-                        for ( Point3D light : lightSources ){
-                            Vector3D lightVector = new Vector3D(impact.getImpact(), light);
-                            double theta = normal.scalarProduct(lightVector) / (normal.getLength() * lightVector.getLength());
-                            double coef = theta < 0 ? AMBIENT_LIGHT : AMBIENT_LIGHT + (1 - AMBIENT_LIGHT) * theta;
-                            color = new Color((int)(new Color(color).getRed() * coef),
-                                    (int)(new Color(color).getGreen() * coef),
-                                    (int)(new Color(color).getBlue() * coef)).getRGB();
-                        }
+                final int x = i, y = j;
+                // TODO Why is the executor slower than single threaded execution...
+                //executor.submit(() -> {
+                    Ray ray = screen[x][y];
+                    int color = computeColor(ray);
+                    synchronized (bi) {
+                        bi.setRGB(x, y, color);
                     }
-                }
-                bi.setRGB(i, j, color);
+                    latch.countDown();
+                //});
             }
         }
+        try{
+            latch.await();
+        } catch(InterruptedException ie){
+            ie.printStackTrace();
+        }
         return bi;
+    }
+
+    private int computeColor(final Ray ray){
+        // TODO Add a background texture and take the color hit by the ray as default
+        Color color = Color.BLACK;
+        // FIXME Too expensive computation
+        RayImpact impact = getClosestImpact(ray, objects);
+        if ( impact.equals(RayImpact.NONE)) return color.getRGB();
+        Shape3D object = impact.getObject();
+        color = new Color(object.getColor());
+        Vector3D normal = object.getNormal(impact.getImpact());
+        double diffusedLight = 0;
+        for ( Point3D light : lights){
+            Vector3D lightVector = new Vector3D(impact.getImpact(), light);
+            // TODO Add power to lightsources and ponderate with the distance |(light - impact)|
+            double theta = normal.scalarProduct(lightVector) / (normal.getLength() * lightVector.getLength());
+            diffusedLight = Math.min((1 - AMBIENT_LIGHT), diffusedLight + (theta < 0 ? 0 : (1 - AMBIENT_LIGHT) * theta));
+        }
+        color = new Color((int)(color.getRed() * (AMBIENT_LIGHT + diffusedLight)),
+                (int)(color.getGreen() * (AMBIENT_LIGHT + diffusedLight)),
+                (int)(color.getBlue() * (AMBIENT_LIGHT + diffusedLight)));
+        return color.getRGB();
+    }
+
+    private RayImpact getClosestImpact(Ray ray, Collection<Shape3D> objects){
+        RayImpact impact = RayImpact.NONE;
+        for ( Shape3D object : objects ) {
+            RayImpact currentImpact;
+            if ((currentImpact = object.isHit(ray)) != RayImpact.NONE &&
+                    impact.equals(RayImpact.NONE) || currentImpact.getDistance() < impact.getDistance()) {
+                impact = currentImpact;
+            }
+        }
+        return impact;
     }
 }

@@ -4,6 +4,7 @@ package com.surenot.raytracer.primitives;
  * Created by m.clauss on 1/12/2016.
  */
 public final class Dimension2D {
+
     private final double x, y;
 
     public Dimension2D(final double x, final double y){

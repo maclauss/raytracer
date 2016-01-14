@@ -20,11 +20,8 @@ public final class Point3D {
 
     public double getZ() { return z; }
 
-    public Point3D add(Point3D p){
-        return new Point3D(x + p.getX(), y + p.getY(), z + p.getZ());
-    }
-
     public Point3D substract(Point3D p){
+        if ( p == null ) throw new IllegalArgumentException();
         return new Point3D(x - p.getX(), y - p.getY(), z - p.getZ());
     }
 
