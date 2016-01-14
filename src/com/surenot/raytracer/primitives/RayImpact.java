@@ -7,7 +7,7 @@ import com.surenot.raytracer.shapes.Shape3D;
  */
 public class RayImpact {
 
-    public static final RayImpact NONE = new RayImpact(null, null, null, Double.NaN);
+    public static final RayImpact NONE = new RayImpact(null, null, null, Double.POSITIVE_INFINITY);
 
     private final Vector3D vector;
     private final Point3D impact;
@@ -32,7 +32,7 @@ public class RayImpact {
         return impact;
     }
 
-    public Shape3D getObject() {
+    public Shape3D getImpactedObject() {
         return object;
     }
 

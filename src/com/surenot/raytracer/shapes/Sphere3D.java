@@ -25,7 +25,7 @@ public final class Sphere3D implements Shape3D {
     @Override
     public RayImpact isHit(Ray ray){
         // Origin - center as we use the normalized ray vector
-        Point3D no = Point3D.ORIGIN.substract(center);
+        Point3D no = ray.getVector().getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
         double a = 1; //ray.getVector().scalarProduct(ray.getVector());
         double b = 2 * ray.getVector().normalize().scalarProduct(no);
@@ -45,7 +45,7 @@ public final class Sphere3D implements Shape3D {
         } else {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
-        return Double.isNaN(impactDistance) ? RayImpact.NONE : new RayImpact(ray.getVector(), ray.getVector().normalize().multiply(impactDistance), this, impactDistance);
+        return Double.isNaN(impactDistance) ? RayImpact.NONE : new RayImpact(ray.getVector(), ray.getVector().normalize().multiply(impactDistance).add(ray.getVector().getOrigin()), this, impactDistance);
     }
 
     @Override

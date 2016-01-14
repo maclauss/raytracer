@@ -22,7 +22,7 @@ public class GUI extends JFrame {
         final JFrame frame = new JFrame();
         final JLabel imageLabel = new JLabel();
 
-        frame.setSize(new java.awt.Dimension(800, 600));
+        frame.setSize(new java.awt.Dimension(400, 300));
         frame.add(imageLabel);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -36,11 +36,14 @@ public class GUI extends JFrame {
                 e.printStackTrace();
             }
             // Scene objects
-            final Point3D observer = new Point3D(0, 0, 1.5);
-            final Point3D screenOrigin = new Point3D(5, -2, 3);
+            final Point3D observer = new Point3D(0, 0, 2);
+            final Point3D screenOrigin = new Point3D(5, -2, 3.5);
             final Dimension2D screenDimension = new Dimension2D(3, 4);
-            final java.awt.Dimension screenPixelCount = new java.awt.Dimension(800, 600);
+            final java.awt.Dimension screenPixelCount = new java.awt.Dimension(400, 300);
             final Collection<Shape3D> objects = new ArrayList();
+            /*objects.add(new Sphere3D(new Point3D(20, 0, 0), 2, Color.RED.getRGB()));
+            objects.add(new Sphere3D(new Point3D(20, 4, 0), 1, Color.RED.getRGB()));
+            objects.add(new Light3D(new Sphere3D(new Point3D(20, -4, 0), 0.5, Color.WHITE.getRGB())));*/
             objects.add(new Sphere3D(new Point3D(20, -1, 1.5), 2, Color.RED.getRGB()));
             objects.add(new Sphere3D(new Point3D(22, 2.5, 2.5), 2, Color.BLUE.getRGB()));
             objects.add(new Sphere3D(new Point3D(18, 0.2, -0.5), 0.5, Color.GREEN.getRGB()));

@@ -31,6 +31,11 @@ public final class Point3D {
         return new Point3D(x * a, y * a, z * a);
     }
 
+    public Point3D add(Point3D p){
+        if (p == null) throw new IllegalArgumentException();
+        return new Point3D(x + p.getX(), y + p.getY(), z + p.getZ());
+    }
+
     public Point3D substract(Point3D p) {
         if (p == null) throw new IllegalArgumentException();
         return new Point3D(x - p.getX(), y - p.getY(), z - p.getZ());
