@@ -5,13 +5,10 @@ package com.surenot.raytracer.primitives;
  */
 public class Vector3D {
 
-    private final double accuracy = 0.000001;
-
     private final Point3D origin;
     private final Point3D direction;
+    // Actual caches, non-final fields, not to be used in hashcode and equals
     private Point3D normalized = null;
-    // Not final because its value can change from NaN to the real length to avoid costly computations,
-    // however this doesn't impact the immutability of the class
     private double length;
 
     public Vector3D(final Point3D direction){
@@ -82,35 +79,15 @@ public class Vector3D {
 
         Vector3D vector3D = (Vector3D) o;
 
-        if (Double.compare(vector3D.accuracy, accuracy) != 0) return false;
-        if (Double.compare(vector3D.length, length) != 0) return false;
         if (!origin.equals(vector3D.origin)) return false;
         return direction.equals(vector3D.direction);
+
     }
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        temp = Double.doubleToLongBits(accuracy);
-        result = (int) (temp ^ (temp >>> 32));
-        result = 31 * result + origin.hashCode();
+        int result = origin.hashCode();
         result = 31 * result + direction.hashCode();
-        temp = Double.doubleToLongBits(length);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
-    }
-
-    public static Vector3D getNormalizedVector3D(Point3D origin, Point3D direction){
-        double x = direction.getX() - origin.getX();
-        double y = direction.getY() - origin.getY();
-        double z = direction.getZ() - origin.getZ();
-        double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-        if ( length == 1 ) return new Vector3D(Point3D.ORIGIN, new Point3D(x, y, z));
-        else return new Vector3D(Point3D.ORIGIN, new Point3D(x / length, y / length, z / length));
-    }
-
-    public static Vector3D getNormalizedVector3D(Vector3D vector){
-        return getNormalizedVector3D(vector.getOrigin(), vector.getDirection());
     }
 }
