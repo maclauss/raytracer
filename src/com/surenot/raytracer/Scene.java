@@ -3,6 +3,7 @@ package com.surenot.raytracer;
 import com.surenot.raytracer.primitives.Dimension2D;
 import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Ray;
 import com.surenot.raytracer.primitives.Vector3D;
 import com.surenot.raytracer.shapes.Light3D;
 import com.surenot.raytracer.shapes.Shape3D;
@@ -94,11 +95,12 @@ public final class Scene {
                     double sqd = lightVector.getOrigin().squareDistance(impact.getPoint());
                     if (shapes.stream()
                             .filter(shape -> shape != light && shape != impact.getImpactedObject())
-                            .map(shape -> shape.isHit(lightVector))
-                            .anyMatch(ri -> !ri.equals(Impact3D.NONE) &&
-                                    !ri.getPoint().equals(impact.getImpactedObject()) &&
-                                    ri.getSquareDistance() < sqd)) return 0.0;
-
+                            .anyMatch(shape -> {
+                                Impact3D i = shape.isHit(lightVector);
+                                return !i.equals(Impact3D.NONE) &&
+                                        !i.getPoint().equals(impact.getImpactedObject()) &&
+                                        i.getSquareDistance() < sqd;
+                            })) return 0.0;
                     double theta = -normal.normalize().scalarProduct(lightVector.normalize());
                     return theta < 0 ? 0 : DIFFUSED_LIGHT * theta;
                 })
@@ -170,60 +172,5 @@ public final class Scene {
             }
         }
         return false;
-    }
-}
-
-class Ray {
-
-    private final int x;
-    private final int y;
-    private final Vector3D v;
-
-    public Ray(int x, int y, Vector3D v){
-        this.x = x;
-        this.y = y;
-        this.v = v;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public Vector3D getVector() {
-        return v;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Ray ray = (Ray) o;
-
-        if (x != ray.x) return false;
-        if (y != ray.y) return false;
-        return !(v != null ? !v.equals(ray.v) : ray.v != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = x;
-        result = 31 * result + y;
-        result = 31 * result + (v != null ? v.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Ray{" +
-                "x=" + x +
-                ", y=" + y +
-                ", vector=" + v +
-                '}';
     }
 }
