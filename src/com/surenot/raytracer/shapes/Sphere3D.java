@@ -58,6 +58,30 @@ public final class Sphere3D implements Shape3D {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Sphere3D sphere3D = (Sphere3D) o;
+
+        if (Double.compare(sphere3D.radius, radius) != 0) return false;
+        if (color != sphere3D.color) return false;
+        return center != null ? center.equals(sphere3D.center) : sphere3D.center == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = center != null ? center.hashCode() : 0;
+        temp = Double.doubleToLongBits(radius);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + color;
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Sphere3D{" +
                 "center=" + center +
