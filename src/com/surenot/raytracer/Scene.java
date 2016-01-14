@@ -45,9 +45,8 @@ public final class Scene {
                  final Point3D origin,
                  final Dimension2D screenSize,
                  final int pixelCountX, final int pixelCountY,
-                 final Collection<Shape3D> objects,
-                 final Collection<Point3D> lights){
-        if ( observer == null || origin == null || screenSize == null || objects == null || lights == null ){
+                 final Collection<Shape3D> objects){
+        if ( observer == null || origin == null || screenSize == null || objects == null ){
             throw new IllegalArgumentException();
         }
         if ( screenSize.getX() <= 0 ) throw new IllegalArgumentException();

@@ -45,8 +45,13 @@ public class GUI extends JFrame {
             objects.add(new Sphere3D(new Point3D(22, 2.5, 2.5), 2, Color.BLUE.getRGB()));
             objects.add(new Sphere3D(new Point3D(18, 0.2, -0.5), 0.5, Color.GREEN.getRGB()));
             objects.add(new Sphere3D(new Point3D(24, 2.5, 0), 1.5, Color.GRAY.getRGB()));
-            final Collection<Point3D> lights = new ArrayList();
             final int theta = i % 360;
+            objects.add(new Light3D(new Sphere3D(
+                    new Point3D(
+                            18,
+                            -2.5,
+                            1.5),
+                    0.2, Color.WHITE.getRGB())));
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
                         -Math.cos(Math.toRadians(theta)) * 8 + 20,
@@ -59,7 +64,7 @@ public class GUI extends JFrame {
                             0,
                             Math.sin(Math.toRadians(theta)) * 8),
                     1, Color.WHITE.getRGB())));
-            final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)frame.getSize().getHeight(), (int)frame.getSize().getWidth(), objects, lights);
+            final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int)frame.getSize().getHeight(), (int)frame.getSize().getWidth(), objects);
             SwingUtilities.invokeLater(() -> {
                 BufferedImage bi = scene.render();
                 imageLabel.setIcon(new ImageIcon(bi));
