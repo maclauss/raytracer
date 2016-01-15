@@ -7,9 +7,7 @@ public final class Point3D {
     private final double x, y, z;
 
     public Point3D(final double x, final double y, final double z) {
-        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) {
-            throw new NumberFormatException();
-        }
+        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) throw new NumberFormatException();
         this.x = x;
         this.y = y;
         this.z = z;
@@ -28,6 +26,7 @@ public final class Point3D {
     }
 
     public Point3D multiply(double a) {
+        if (Double.isNaN(a)) throw new NumberFormatException();
         return new Point3D(x * a, y * a, z * a);
     }
 

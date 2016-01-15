@@ -13,5 +13,9 @@ public interface Shape3D {
     Vector3D getNormal(Point3D p);
     Point3D getCenter();
     int getColor();
+    double getAmbiantReflectionCoefficient();
+    double getDiffuseReflectionCoefficient();
+    double getSpecularReflectionCoefficient();
+    double getSpecularReflectionExponent();
 
 }

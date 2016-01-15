@@ -44,7 +44,9 @@ public final class Sphere3D implements Shape3D {
         } else {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
-        return Double.isNaN(impactDistance) ? Impact3D.NONE : new Impact3D(ray, ray.normalize().multiply(impactDistance).add(ray.getOrigin()), this, impactDistance);
+        if ( Double.isNaN(impactDistance)) return Impact3D.NONE;
+        Vector3D impactVector = new Vector3D(ray.getOrigin(), ray.normalize().multiply(impactDistance));
+        return new Impact3D(impactVector, impactVector.getDirection().add(impactVector.getOrigin()), this, impactDistance);
     }
 
     @Override
@@ -60,6 +62,26 @@ public final class Sphere3D implements Shape3D {
     @Override
     public int getColor() {
         return color;
+    }
+
+    @Override
+    public double getAmbiantReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getDiffuseReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getSpecularReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getSpecularReflectionExponent() {
+        return 1000;
     }
 
     @Override

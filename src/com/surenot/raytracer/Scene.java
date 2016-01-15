@@ -32,8 +32,8 @@ public final class Scene {
 
     */
 
-    public final static double AMBIENT_LIGHT = 0.1;
-    public final static double DIFFUSED_LIGHT = 1 - AMBIENT_LIGHT;
+    public final static double MAX_AMBIENT_LIGHT_INTENSITY = 0.1;
+    public final static double MAX_DIFFUSE_LIGHT_INTENSITY = 1 - MAX_AMBIENT_LIGHT_INTENSITY;
 
     private final Collection<Ray> newScreen;
     private final Collection<Shape3D> shapes;
@@ -72,7 +72,8 @@ public final class Scene {
     }
 
     public BufferedImage render() {
-        newScreen.parallelStream().forEach(ray -> image.setRGB(ray.getX(), ray.getY(), computeColor(ray.getVector())));
+        newScreen.parallelStream()
+                .forEach(ray -> image.setRGB(ray.getX(), ray.getY(), computeColor(ray.getVector())));
         return image;
     }
 
@@ -87,90 +88,84 @@ public final class Scene {
         if (impact.equals(Impact3D.NONE)) return Color.BLACK.getRGB();
         if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
 
-        Vector3D normal = impact.getImpactedObject().getNormal(impact.getPoint());
-        // TODO Quadratic to be replaced if possible
-        double dLight = lights.stream()
-                .map(light -> {
-                    Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint());
-                    double sqd = lightVector.getOrigin().squareDistance(impact.getPoint());
-                    if (shapes.stream()
-                            .filter(shape -> shape != light && shape != impact.getImpactedObject())
-                            .anyMatch(shape -> {
-                                Impact3D i = shape.isHit(lightVector);
-                                return !i.equals(Impact3D.NONE) &&
-                                        !i.getPoint().equals(impact.getImpactedObject()) &&
-                                        i.getSquareDistance() < sqd;
-                            })) return 0.0;
-                    double theta = -normal.normalize().scalarProduct(lightVector.normalize());
-                    return theta < 0 ? 0 : DIFFUSED_LIGHT * theta;
-                })
-                .reduce(0.0, (a, b) -> Math.min(a + b, DIFFUSED_LIGHT));
+        Vector3D n = impact.getImpactedObject().getNormal(impact.getPoint());
 
-        Color color = new Color(impact.getImpactedObject().getColor());
-        return new Color(
-                (int) (color.getRed() * (AMBIENT_LIGHT + dLight)),
-                (int) (color.getGreen() * (AMBIENT_LIGHT + dLight)),
-                (int) (color.getBlue() * (AMBIENT_LIGHT + dLight)))
-                .getRGB();
-    }
+        /*r.normalize();
+        System.out.println("v=" + v);
+        System.out.println("impact=" + impact);
+        System.out.println("r=" + r);
+        System.out.println("n=" + n);
+        //System.out.println("light=" + light);
+        System.out.println();*/
 
-    // I keep this because it is somehow faster than the stream example...
-    private int computeColor2(final Vector3D v) {
-        // FIXME Too expensive computation, find a way to optimize (too many normalizations etc)
-        Impact3D impact = getClosestImpact(v, shapes);
+        final double or = new Color(impact.getImpactedObject().getColor()).getRed() / 255;
+        final double og = new Color(impact.getImpactedObject().getColor()).getGreen() / 255;
+        final double ob = new Color(impact.getImpactedObject().getColor()).getBlue() / 255;
 
-        if (impact.equals(Impact3D.NONE)) return Color.BLACK.getRGB();
-        if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
+        final double lr = Color.WHITE.getRed() / 255;
+        final double lg = Color.WHITE.getGreen() / 255;
+        final double lb = Color.WHITE.getBlue() / 255;
 
-        Vector3D normal = impact.getImpactedObject().getNormal(impact.getPoint());
-        double dLight = 0;
-        for (Shape3D light : lights) {
+        final double ambientIntensityR = MAX_AMBIENT_LIGHT_INTENSITY * impact.getImpactedObject().getAmbiantReflectionCoefficient() * or;
+        final double ambientIntensityG = MAX_AMBIENT_LIGHT_INTENSITY * impact.getImpactedObject().getAmbiantReflectionCoefficient() * og;
+        final double ambientIntensityB = MAX_AMBIENT_LIGHT_INTENSITY * impact.getImpactedObject().getAmbiantReflectionCoefficient() * ob;
+
+        final double diffuseCoefficient = MAX_DIFFUSE_LIGHT_INTENSITY * impact.getImpactedObject().getDiffuseReflectionCoefficient();
+        double diffuseIntensityR = 0;
+        double diffuseIntensityG = 0;
+        double diffuseIntensityB = 0;
+
+        double specularIntensityR = 0;
+        double specularIntensityG = 0;
+        double specularIntensityB = 0;
+        for ( Light3D light : lights ){
             Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint());
-            if (isBlocked(lightVector, impact.getPoint(), shapes, light, impact.getImpactedObject())) {
-                continue;
-            }
-            // TODO Add power to light sources and ponderate with the distance |(light - impact)|
-            double theta = -normal.normalize().scalarProduct(lightVector.normalize());
-            dLight = Math.min(DIFFUSED_LIGHT, dLight + (theta < 0 ? 0 : DIFFUSED_LIGHT * theta));
-            if (dLight == DIFFUSED_LIGHT) break;
+            double sqd = lightVector.getOrigin().squareDistance(impact.getPoint());
+            if (shapes.stream()
+                    .filter(shape -> shape != light && shape != impact.getImpactedObject())
+                    .anyMatch(shape -> {
+                        Impact3D i = shape.isHit(lightVector);
+                        return !i.equals(Impact3D.NONE) &&
+                                !i.getPoint().equals(impact.getImpactedObject()) &&
+                                i.getSquareDistance() < sqd;
+                    })) continue;
+            // FIXME Somehow this produces the opposite of what it should produce
+            double theta = -n.normalize().scalarProduct(lightVector.normalize());
+            double atmosphericAttenuation = Math.min(1,
+                    (1 / ( light.getConstantAttenuationCoefficient() +
+                            light.getLinearAttenuationCoefficient() *
+                                    (lightVector.getLength() + impact.getDistance()) +
+                            light.getQuadraticAttenuationCoefficient() *
+                                    Math.pow(lightVector.getLength() + impact.getDistance(), 2) )));
+            diffuseIntensityR += theta < 0 ? 0 : diffuseCoefficient * theta * atmosphericAttenuation * or;
+            diffuseIntensityG += theta < 0 ? 0 : diffuseCoefficient * theta * atmosphericAttenuation * og;
+            diffuseIntensityB += theta < 0 ? 0 : diffuseCoefficient * theta * atmosphericAttenuation * ob;
+
+            Vector3D nn = new Vector3D(Point3D.ORIGIN, n.normalize());
+            Vector3D r = lightVector.substract(nn.multiply(lightVector.scalarProduct(nn)).multiply(2));
+            specularIntensityR += lr * atmosphericAttenuation *
+                    impact.getImpactedObject().getSpecularReflectionCoefficient() *
+                    Math.pow(r.scalarProduct(v.normalize()),
+                            impact.getImpactedObject().getSpecularReflectionExponent());
+            specularIntensityG += lg * atmosphericAttenuation *
+                    impact.getImpactedObject().getSpecularReflectionCoefficient() *
+                    Math.pow(r.normalize().scalarProduct(v.normalize()),
+                            impact.getImpactedObject().getSpecularReflectionExponent());
+            specularIntensityB += lb * atmosphericAttenuation *
+                    impact.getImpactedObject().getSpecularReflectionCoefficient() *
+                    Math.pow(r.normalize().scalarProduct(v.normalize()),
+                            impact.getImpactedObject().getSpecularReflectionExponent());
         }
+        final double intensityR = ambientIntensityR + diffuseIntensityR + specularIntensityR;
+        final double intensityG = ambientIntensityG + diffuseIntensityG + specularIntensityG;
+        final double intensityB = ambientIntensityB + diffuseIntensityB + specularIntensityB;
 
         Color color = new Color(impact.getImpactedObject().getColor());
-        color = new Color((int) (color.getRed() * (AMBIENT_LIGHT + dLight)),
-                (int) (color.getGreen() * (AMBIENT_LIGHT + dLight)),
-                (int) (color.getBlue() * (AMBIENT_LIGHT + dLight)));
-        return color.getRGB();
-    }
-
-    private Impact3D getClosestImpact(final Vector3D v, final Collection<Shape3D> objects) {
-        Impact3D impact = Impact3D.NONE;
-        for (Shape3D object : objects) {
-            Impact3D currentImpact;
-            if ((currentImpact = object.isHit(v)) != Impact3D.NONE &&
-                    impact.equals(Impact3D.NONE) || currentImpact.getDistance() < impact.getDistance()) {
-                impact = currentImpact;
-            }
-        }
-        return impact;
-    }
-
-    private static boolean isBlocked(final Vector3D v,
-                                     final Point3D p,
-                                     final Collection<Shape3D> c,
-                                     final Shape3D sourceObject,
-                                     final Shape3D impactedObject) {
-        double sqd = v.getOrigin().squareDistance(p);
-        for (Shape3D shape : c) {
-            if (shape == sourceObject) continue;
-            // TODO This solves some double accuracy issues, but will cause problems with complex shapes
-            if (shape == impactedObject) continue;
-            Impact3D ri = shape.isHit(v);
-            if (!ri.equals(Impact3D.NONE)) {
-                if (!ri.getPoint().equals(p) && ri.getSquareDistance() < sqd) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        // The ambient component can be computed only once per object as it never changes
+        return new Color(
+                (int) (Math.max(Math.min(intensityR * 255, 255), 0)),
+                (int) (Math.max(Math.min(intensityG * 255, 255), 0)),
+                (int) (Math.max(Math.min(intensityB * 255, 255), 0)))
+                .getRGB();
     }
 }

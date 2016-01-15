@@ -39,6 +39,38 @@ public final class Light3D implements Shape3D {
     }
 
     @Override
+    public double getAmbiantReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getDiffuseReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getSpecularReflectionCoefficient() {
+        return 1;
+    }
+
+    @Override
+    public double getSpecularReflectionExponent() {
+        return 100;
+    }
+
+    public double getConstantAttenuationCoefficient(){
+        return 0;
+    }
+
+    public double getLinearAttenuationCoefficient(){
+        return 0.01;
+    }
+
+    public double getQuadraticAttenuationCoefficient(){
+        return 0.0005;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
