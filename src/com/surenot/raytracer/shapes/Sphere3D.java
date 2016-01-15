@@ -81,7 +81,7 @@ public final class Sphere3D implements Shape3D {
 
     @Override
     public double getSpecularReflectionExponent() {
-        return 1000;
+        return 50;
     }
 
     @Override

@@ -44,14 +44,15 @@ public class GUI extends JFrame {
             objects.add(new Sphere3D(new Point3D(20, -1, 1.5), 2, Color.RED.getRGB()));
             objects.add(new Sphere3D(new Point3D(22, 2.5, 2.5), 2, Color.BLUE.getRGB()));
             objects.add(new Sphere3D(new Point3D(18, 0.2, 0), 0.5, Color.GREEN.getRGB()));
-            objects.add(new Sphere3D(new Point3D(24, 2.5, 0), 1.5, Color.GRAY.getRGB()));
+            objects.add(new Sphere3D(new Point3D(24, 2.5, 0), 1.5, Color.ORANGE.getRGB()));
+            objects.add(new Sphere3D(new Point3D(17, 0.5, 2), 0.5, new Color(190, 190, 190).getRGB()));
             final int theta = i % 360;
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
                             21.2,
                             1.05,
                             0.7),
-                    0.2, Color.WHITE.getRGB())));
+                    0.1, Color.WHITE.getRGB())));
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
                             -Math.cos(Math.toRadians(theta)) * 15 + 20,
