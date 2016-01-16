@@ -22,9 +22,8 @@ public class Vector3D {
         }
         this.origin = origin;
         this.direction = direction;
-        // TODO try to replace with Double.NaN ?
-        this.length = Double.POSITIVE_INFINITY;
-        this.squaredLength = Double.POSITIVE_INFINITY;
+        this.length = Double.NaN;
+        this.squaredLength = Double.NaN;
     }
 
     public Vector3D substract(Vector3D v) {
@@ -68,13 +67,13 @@ public class Vector3D {
     }
 
     public double getLength() {
-        return length == Double.POSITIVE_INFINITY ?
+        return Double.isNaN(length) ?
                 (length = Math.sqrt(getSquaredLength())) : length;
     }
 
     public double getSquaredLength() {
-        return squaredLength == Double.POSITIVE_INFINITY ?
-                (length = Math.pow(direction.getX() - origin.getX(), 2) +
+        return Double.isNaN(squaredLength) ?
+                (squaredLength = Math.pow(direction.getX() - origin.getX(), 2) +
                         Math.pow(direction.getY() - origin.getY(), 2) +
                         Math.pow(direction.getZ() - origin.getZ(), 2)) :
                 squaredLength;
