@@ -16,11 +16,11 @@ public final class Light3D implements Shape3D {
     }
 
     @Override
-    public Impact3D isHit(final Vector3D ray) {
-        Impact3D impact = shape.isHit(ray);
+    public Impact3D isHit(final Vector3D v) {
+        Impact3D impact = shape.isHit(v);
         return impact.equals(Impact3D.NONE) ?
                 Impact3D.NONE :
-                new Impact3D(ray, impact.getPoint(), this, impact.getDistance());
+                new Impact3D(v, impact.getPoint(), this, impact.getDistance());
     }
 
     @Override

@@ -8,17 +8,17 @@ import com.surenot.raytracer.shapes.Shape3D;
 public class Impact3D {
 
     public static final Impact3D NONE = new Impact3D(null, null, null, Double.POSITIVE_INFINITY);
+    public static final Impact3D INFINITY = new Impact3D(null, null, null, 0.0);
 
     private final Vector3D vector;
     private final Point3D impact;
     private final Shape3D object;
     private final double distance;
-    private double squareDistance = Double.POSITIVE_INFINITY;
+    private double squareDistance = Double.NaN;
 
     public Impact3D(final Vector3D vector, final Point3D impact, final Shape3D object, final double distance) {
-        if ((vector == null || impact == null || object == null) && NONE != null) {
+        if ((vector == null || impact == null || object == null) && NONE != null && INFINITY != null)
             throw new IllegalArgumentException();
-        }
         if (impact != null && Double.isNaN(impact.getX())) {
             System.out.println("wtf");
         }
@@ -41,7 +41,7 @@ public class Impact3D {
     }
 
     public double getSquareDistance() {
-        return squareDistance == Double.POSITIVE_INFINITY ?
+        return Double.isNaN(squareDistance) ?
                 squareDistance = Math.pow(distance, 2) :
                 squareDistance;
     }

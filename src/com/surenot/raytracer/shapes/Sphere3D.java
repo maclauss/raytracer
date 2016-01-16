@@ -22,12 +22,25 @@ public final class Sphere3D implements Shape3D {
     }
 
     @Override
-    public Impact3D isHit(final Vector3D ray) {
-        // Origin - center as we use the normalized ray vector
-        Point3D no = ray.getOrigin().substract(center);
+    public Impact3D isHit(final Vector3D v) {
+        /*Vector3D vs = new Vector3D(v.getOrigin(), center);
+        if ( v.normalize().scalarProduct(vs.normalize()) <= 0 ) return Impact3D.NONE;
+        Vector3D proj = new Vector3D(v.getOrigin(), v.getOrigin().add(v.normalize().multiply(v.normalize().scalarProduct(vs.normalize()) / v.getLength())));
+        double dproj = proj.getDirection().distance(center);
+        if ( dproj > radius ) return Impact3D.NONE;
+        if ( dproj == radius ) return new Impact3D(v, v.getDirection(), this, dproj);
+        double d1 = proj.getLength() - Math.sqrt(r2 - Math.pow(dproj, 2));
+        double d2 = proj.getLength() + Math.sqrt(r2 - Math.pow(dproj, 2));
+        double closest = (d1 < 0 ? (d2 < 0 ? Double.NaN : d2) : (d2 < 0 ? d1 : (d1 < d2 ? d1 : d2)));
+        if ( Double.isNaN(closest)) return Impact3D.NONE;
+        Vector3D res = v.multiply(closest);
+        return new Impact3D(v, res.getDirection(), this, res.getLength());*/
+
+        // Origin - center as we use the normalized v vector
+        Point3D no = v.getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
         double a = 1;
-        double b = 2 * ray.normalize().scalarProduct(no);
+        double b = 2 * v.normalize().scalarProduct(no);
         double c = no.scalarProduct(no) - r2;
 
         double d = Math.pow(b, 2) - 4 * a * c;
@@ -45,7 +58,7 @@ public final class Sphere3D implements Shape3D {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
         if ( Double.isNaN(impactDistance)) return Impact3D.NONE;
-        Vector3D impactVector = new Vector3D(ray.getOrigin(), ray.normalize().multiply(impactDistance));
+        Vector3D impactVector = new Vector3D(v.getOrigin(), v.normalize().multiply(impactDistance));
         return new Impact3D(impactVector, impactVector.getDirection().add(impactVector.getOrigin()), this, impactDistance);
     }
 

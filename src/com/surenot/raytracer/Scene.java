@@ -113,9 +113,9 @@ public final class Scene {
                                 i.getSquareDistance() < sqd;
                     })) continue;
 
-            final double lr = Color.WHITE.getRed() / 255;
-            final double lg = Color.WHITE.getGreen() / 255;
-            final double lb = Color.WHITE.getBlue() / 255;
+            final double lr = Color.WHITE.getRed() / 255.0;
+            final double lg = Color.WHITE.getGreen() / 255.0;
+            final double lb = Color.WHITE.getBlue() / 255.0;
 
             // FIXME Somehow the scalar products produce negative results
 

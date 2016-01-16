@@ -9,7 +9,7 @@ import com.surenot.raytracer.primitives.Vector3D;
  */
 public interface Shape3D {
 
-    Impact3D isHit(Vector3D ray);
+    Impact3D isHit(Vector3D v);
     Vector3D getNormal(Point3D p);
     Point3D getCenter();
     int getColor();

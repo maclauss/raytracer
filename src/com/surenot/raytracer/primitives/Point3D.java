@@ -2,12 +2,13 @@ package com.surenot.raytracer.primitives;
 
 public final class Point3D {
 
+    public final static Point3D NONE = new Point3D(Double.NaN, Double.NaN, Double.NaN);
     public final static Point3D ORIGIN = new Point3D(0, 0, 0);
 
     private final double x, y, z;
 
     public Point3D(final double x, final double y, final double z) {
-        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) throw new NumberFormatException();
+        if ((Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) && NONE != null) throw new NumberFormatException();
         this.x = x;
         this.y = y;
         this.z = z;
@@ -54,6 +55,11 @@ public final class Point3D {
         return Math.pow(x - p.getX(), 2) +
                 Math.pow(y - p.getY(), 2) +
                 Math.pow(z - p.getZ(), 2);
+    }
+
+    public Point3D normalize(){
+        double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+        return new Point3D(x / length, y / length, z / length);
     }
 
     @Override

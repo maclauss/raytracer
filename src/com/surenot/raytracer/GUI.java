@@ -2,7 +2,9 @@ package com.surenot.raytracer;
 
 import com.surenot.raytracer.primitives.Dimension2D;
 import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Vector3D;
 import com.surenot.raytracer.shapes.Light3D;
+import com.surenot.raytracer.shapes.Plane;
 import com.surenot.raytracer.shapes.Shape3D;
 import com.surenot.raytracer.shapes.Sphere3D;
 
@@ -39,8 +41,9 @@ public class GUI extends JFrame {
             final Point3D observer = new Point3D(-15, 0, 2);
             final Point3D screenOrigin = new Point3D(-10, -2, 3.5);
             final Dimension2D screenDimension = new Dimension2D(3, 4);
-            final java.awt.Dimension screenPixelCount = new java.awt.Dimension(400, 300);
             final Collection<Shape3D> objects = new ArrayList();
+            objects.add(new Plane(new Vector3D(new Point3D(0, 0, -15), new Point3D(1, 0, -15)),
+                    new Vector3D(new Point3D(0, 0, -15), new Point3D(0, 0, -16))));
             objects.add(new Sphere3D(new Point3D(20, -1, 1.5), 2, Color.RED.getRGB()));
             objects.add(new Sphere3D(new Point3D(22, 2.5, 2.5), 2, Color.BLUE.getRGB()));
             objects.add(new Sphere3D(new Point3D(18, 0.2, 0), 0.5, Color.GREEN.getRGB()));
