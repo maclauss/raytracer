@@ -24,7 +24,7 @@ public class GUI extends JFrame {
         final JFrame frame = new JFrame();
         final JLabel imageLabel = new JLabel();
 
-        frame.setSize(new java.awt.Dimension(600, 450));
+        frame.setSize(new java.awt.Dimension(200, 150));
         frame.add(imageLabel);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -38,12 +38,12 @@ public class GUI extends JFrame {
                 e.printStackTrace();
             }
             // Scene objects
-            final Point3D observer = new Point3D(-15, 0, 2);
-            final Point3D screenOrigin = new Point3D(-10, -2, 3.5);
+            final Point3D observer = new Point3D(-13, 0, 0);
+            final Point3D screenOrigin = new Point3D(-10, -2, 1.5);
             final Dimension2D screenDimension = new Dimension2D(3, 4);
             final Collection<Shape3D> objects = new ArrayList();
-            objects.add(new Plane(new Vector3D(new Point3D(0, 0, -15), new Point3D(1, 0, -15)),
-                    new Vector3D(new Point3D(0, 0, -15), new Point3D(0, 0, -16))));
+            objects.add(new Plane(new Vector3D(new Point3D(0, 0, -5), new Point3D(1, 0, 0), true),
+                    new Vector3D(new Point3D(0, 0, -5), new Point3D(0, 0, 1), true)));
             objects.add(new Sphere3D(new Point3D(20, -1, 1.5), 2, Color.RED.getRGB()));
             objects.add(new Sphere3D(new Point3D(22, 2.5, 2.5), 2, Color.BLUE.getRGB()));
             objects.add(new Sphere3D(new Point3D(18, 0.2, 0), 0.5, Color.GREEN.getRGB()));
@@ -52,21 +52,21 @@ public class GUI extends JFrame {
             final int theta = i % 360;
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
-                            21.2,
-                            1.05,
-                            0.7),
-                    0.1, Color.WHITE.getRGB())));
-            objects.add(new Light3D(new Sphere3D(
-                    new Point3D(
-                            -Math.cos(Math.toRadians(theta)) * 15 + 20,
-                            Math.sin(Math.toRadians(theta)) * 15 + 10,
-                            0),
+                            -Math.cos(Math.toRadians(theta)) * 7 + 20,
+                            Math.sin(Math.toRadians(theta)) * 7 + 3,
+                            3),
                     1, Color.WHITE.getRGB())));
             objects.add(new Light3D(new Sphere3D(
                     new Point3D(
-                            Math.cos(Math.toRadians(theta)) * 12 + 20,
+                            Math.cos(Math.toRadians(theta)) + 20,
+                            Math.sin(Math.toRadians(theta)),
+                            -3),
+                    0.1, Color.WHITE.getRGB())));
+            objects.add(new Light3D(new Sphere3D(
+                    new Point3D(
+                            Math.cos(Math.toRadians(theta)) * 4 + 20,
                             0,
-                            Math.sin(Math.toRadians(theta)) * 12),
+                            Math.sin(Math.toRadians(theta)) * 4 + 2),
                     1, Color.WHITE.getRGB())));
             final Scene scene = new Scene(observer, screenOrigin, screenDimension, (int) frame.getSize().getHeight(), (int) frame.getSize().getWidth(), objects);
             SwingUtilities.invokeLater(() -> {

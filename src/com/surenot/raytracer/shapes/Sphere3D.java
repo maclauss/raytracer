@@ -58,13 +58,13 @@ public final class Sphere3D implements Shape3D {
             impactDistance = t1 < 0 ? t0 : Math.min(t0, t1);
         }
         if ( Double.isNaN(impactDistance)) return Impact3D.NONE;
-        Vector3D impactVector = new Vector3D(v.getOrigin(), v.normalize().multiply(impactDistance));
-        return new Impact3D(impactVector, impactVector.getDirection().add(impactVector.getOrigin()), this, impactDistance);
+        Vector3D impactPoint = v.normalize().multiply(impactDistance);
+        return new Impact3D(v, impactPoint.getOrigin().add(impactPoint.getDirection()), this, impactDistance);
     }
 
     @Override
     public Vector3D getNormal(final Point3D p) {
-        return new Vector3D(center, p);
+        return new Vector3D(center, p.substract(center), false);
     }
 
     @Override

@@ -1,10 +1,6 @@
 package com.surenot.raytracer;
 
-import com.surenot.raytracer.primitives.Dimension2D;
-import com.surenot.raytracer.primitives.Impact3D;
-import com.surenot.raytracer.primitives.Point3D;
-import com.surenot.raytracer.primitives.Ray;
-import com.surenot.raytracer.primitives.Vector3D;
+import com.surenot.raytracer.primitives.*;
 import com.surenot.raytracer.shapes.Light3D;
 import com.surenot.raytracer.shapes.Shape3D;
 
@@ -65,14 +61,22 @@ public final class Scene {
         double pixelSizeZ = screenSize.getY() / pixelCountY;
         for (int i = 0; i < pixelCountY; i++) {
             for (int j = 0; j < pixelCountX; j++) {
-                newScreen.add(new Ray(i, j, new Vector3D(observer,
-                        new Point3D(origin.getX(), origin.getY() + i * pixelSizeY, origin.getZ() - j * pixelSizeZ))));
+                newScreen.add(new Ray(i, j,
+                        new Vector3D(new Point3D(origin.getX(),
+                                origin.getY() + i * pixelSizeY,
+                                origin.getZ() - j * pixelSizeZ)
+                                .substract(observer),
+                            new Point3D(origin.getX(),
+                                    origin.getY() + i * pixelSizeY,
+                                    origin.getZ() - j * pixelSizeZ)
+                                    .substract(observer),
+                            false)));
             }
         }
     }
 
     public BufferedImage render() {
-        newScreen.parallelStream()
+        newScreen.stream()
                 .forEach(ray -> image.setRGB(ray.getX(), ray.getY(), computeColor(ray.getVector())));
         return image;
     }
@@ -89,7 +93,6 @@ public final class Scene {
         if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
 
         Vector3D n = impact.getImpactedObject().getNormal(impact.getPoint());
-        Vector3D nn = new Vector3D(Point3D.ORIGIN, n.normalize());
 
         final Color impactedColor = new Color(impact.getImpactedObject().getColor());
         final double or = impactedColor.getRed() / 255.0;
@@ -102,7 +105,7 @@ public final class Scene {
         double diffuseIntensityR = 0, diffuseIntensityG = 0, diffuseIntensityB = 0;
         double specularIntensityR = 0, specularIntensityG = 0, specularIntensityB = 0;
         for ( Light3D light : lights ){
-            Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint());
+            Vector3D lightVector = new Vector3D(light.getCenter(), impact.getPoint().substract(light.getCenter()), true).normalize();
             final double sqd = lightVector.getOrigin().squareDistance(impact.getPoint());
             if (shapes.stream()
                     .filter(shape -> shape != light && shape != impact.getImpactedObject())
@@ -117,25 +120,23 @@ public final class Scene {
             final double lg = Color.WHITE.getGreen() / 255.0;
             final double lb = Color.WHITE.getBlue() / 255.0;
 
-            // FIXME Somehow the scalar products produce negative results
-
             // Diffuse light
             double theta = -n.normalize().scalarProduct(lightVector.normalize());
             double atmosphericAttenuation = Math.min(1,
                     (1 / ( light.getConstantAttenuationCoefficient() +
                             light.getLinearAttenuationCoefficient() *
-                                    (lightVector.getLength() + impact.getDistance()) +
+                                    (lightVector.normalize().getOrigin().distance(impact.getPoint()) + impact.getDistance()) +
                             light.getQuadraticAttenuationCoefficient() *
-                                    Math.pow(lightVector.getLength() + impact.getDistance(), 2) )));
+                                    Math.pow(lightVector.normalize().getOrigin().distance(impact.getPoint()) + impact.getDistance(), 2) )));
             double diffuseIntensity = diffuseCoefficient * theta * atmosphericAttenuation;
             diffuseIntensityR += theta < 0 ? 0 : or * diffuseIntensity;
             diffuseIntensityG += theta < 0 ? 0 : og * diffuseIntensity;
             diffuseIntensityB += theta < 0 ? 0 : ob * diffuseIntensity;
 
             // Specular light
-            Vector3D r = lightVector.substract(nn.multiply(lightVector.scalarProduct(nn)).multiply(2));
-            double scalarProduct = r.normalize().scalarProduct(v.negate().normalize());
-            if ( scalarProduct < 0 ) {
+            Vector3D r = v.normalize().substract(n.normalize().multiply(2).multiply(v.normalize().scalarProduct(n.normalize())));
+            double scalarProduct = r.normalize().scalarProduct(lightVector.negate().normalize());
+            if ( scalarProduct > 0 ) {
                 double specularIntensity = atmosphericAttenuation *
                         impact.getImpactedObject().getSpecularReflectionCoefficient() *
                         Math.pow(scalarProduct, impact.getImpactedObject().getSpecularReflectionExponent());

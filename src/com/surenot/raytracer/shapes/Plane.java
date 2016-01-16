@@ -29,13 +29,13 @@ public class Plane implements Shape3D {
 
     @Override
     public Impact3D isHit(Vector3D v) {
-        final double vn = v.scalarProduct(normal);
+        final double vn = v.normalize().scalarProduct(normal);
         final double pvn = normal.scalarProduct(vector.getOrigin().substract(v.getOrigin()));
         if ( vn == 0 ) {
             return pvn == 0 ? Impact3D.NONE : Impact3D.NONE;
         }
         final double d = pvn / vn;
-        return d < 0 ? Impact3D.NONE : new Impact3D(v, v.getDirection().multiply(d), this, d);
+        return d < 0 ? Impact3D.NONE : new Impact3D(v, v.normalize().getDirection().multiply(d), this, d);
     }
 
     @Override
@@ -60,17 +60,17 @@ public class Plane implements Shape3D {
 
     @Override
     public double getDiffuseReflectionCoefficient() {
-        return 1;
+        return 0.5;
     }
 
     @Override
     public double getSpecularReflectionCoefficient() {
-        return 1;
+        return 0.2;
     }
 
     @Override
     public double getSpecularReflectionExponent() {
-        return 5;
+        return 50;
     }
 
     @Override

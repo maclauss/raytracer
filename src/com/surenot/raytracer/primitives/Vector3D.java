@@ -7,54 +7,50 @@ public class Vector3D {
 
     private final Point3D origin;
     private final Point3D direction;
-    // Actual caches, non-final fields, not to be used in hashcode and equals
-    private Point3D normalized = null;
-    private double length;
-    private double squaredLength;
 
-    public Vector3D(final Point3D direction) {
-        this(Point3D.ORIGIN, direction);
-    }
-
-    public Vector3D(final Point3D origin, final Point3D direction) {
+    public Vector3D(final Point3D origin, final Point3D direction, boolean normalize) {
         if (origin == null || direction == null) {
             throw new IllegalArgumentException();
         }
         this.origin = origin;
-        this.direction = direction;
-        this.length = Double.NaN;
-        this.squaredLength = Double.NaN;
+        if ( normalize ) {
+            double length = Math.sqrt(Math.pow(direction.getX(), 2) +
+                    Math.pow(direction.getY(), 2) +
+                    Math.pow(direction.getZ(), 2));
+            if (length == 1) this.direction = new Point3D(direction.getX(), direction.getY(), direction.getZ());
+            else this.direction = new Point3D(direction.getX() / length,
+                    direction.getY() / length,
+                    direction.getZ() / length);
+        } else {
+            this.direction = direction;
+        }
     }
 
     public Vector3D substract(Vector3D v) {
-        return new Vector3D(origin.substract(v.getOrigin()), direction.substract(v.getDirection()));
-    }
-
-    public Vector3D substract(Point3D p) {
-        return new Vector3D(origin, direction.substract(p));
+        return new Vector3D(origin, direction.substract(v.getDirection()), false);
     }
 
     public Vector3D multiply(double x) {
-        return new Vector3D(origin, new Point3D(direction.getX() * x, direction.getY() * x, direction.getZ() * x));
+        return new Vector3D(origin, direction.multiply(x), false);
     }
 
     public double scalarProduct(Vector3D v) {
-        double x = getDirection().getX() - origin.getX();
-        double y = getDirection().getY() - origin.getY();
-        double z = getDirection().getZ() - origin.getZ();
-        double xx = v.getDirection().getX() - v.getOrigin().getX();
-        double yy = v.getDirection().getY() - v.getOrigin().getY();
-        double zz = v.getDirection().getZ() - v.getOrigin().getZ();
+        double x = getDirection().getX();
+        double y = getDirection().getY();
+        double z = getDirection().getZ();
+        double xx = v.getDirection().getX();
+        double yy = v.getDirection().getY();
+        double zz = v.getDirection().getZ();
         return x * xx + y * yy + z * zz;
     }
 
     public double scalarProduct(Point3D p) {
-        double x = getDirection().getX() - origin.getX();
-        double y = getDirection().getY() - origin.getY();
-        double z = getDirection().getZ() - origin.getZ();
-        double xx = p.getX() - Point3D.ORIGIN.getX();
-        double yy = p.getY() - Point3D.ORIGIN.getY();
-        double zz = p.getZ() - Point3D.ORIGIN.getZ();
+        double x = getDirection().getX();
+        double y = getDirection().getY();
+        double z = getDirection().getZ();
+        double xx = p.getX();
+        double yy = p.getY();
+        double zz = p.getZ();
         return x * xx + y * yy + z * zz;
     }
 
@@ -66,33 +62,25 @@ public class Vector3D {
         return direction;
     }
 
-    public double getLength() {
-        return Double.isNaN(length) ?
-                (length = Math.sqrt(getSquaredLength())) : length;
-    }
-
-    public double getSquaredLength() {
-        return Double.isNaN(squaredLength) ?
-                (squaredLength = Math.pow(direction.getX() - origin.getX(), 2) +
-                        Math.pow(direction.getY() - origin.getY(), 2) +
-                        Math.pow(direction.getZ() - origin.getZ(), 2)) :
-                squaredLength;
-    }
-
-    public Point3D normalize() {
-        if (normalized == null) {
-            double x = direction.getX() - origin.getX();
-            double y = direction.getY() - origin.getY();
-            double z = direction.getZ() - origin.getZ();
-            double length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-            if (length == 1) normalized = new Point3D(x, y, z);
-            else normalized = new Point3D(x / length, y / length, z / length);
-        }
-        return normalized;
+    public Vector3D normalize() {
+        double length = Math.sqrt(Math.pow(direction.getX(), 2) +
+                Math.pow(direction.getY(), 2) +
+                Math.pow(direction.getZ(), 2));
+        if (length == 1) return this;
+        return new Vector3D(origin,
+                new Point3D(direction.getX() / length,
+                        direction.getY() / length,
+                        direction.getZ() / length),
+                false);
     }
 
     public Vector3D negate(){
-        return new Vector3D(origin, new Point3D(-direction.getX(), -direction.getY(), -direction.getZ()));
+        // TODO If all vectors are normalized, we can use "true" here
+        return new Vector3D(origin,
+                new Point3D(-direction.getX(),
+                        -direction.getY(),
+                        -direction.getZ()),
+                true);
     }
 
     @Override
@@ -119,8 +107,6 @@ public class Vector3D {
         return "Vector3D{" +
                 "origin=" + origin +
                 ", direction=" + direction +
-                ", normalized=" + normalized +
-                ", length=" + length +
                 '}';
     }
 }

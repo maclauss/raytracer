@@ -55,7 +55,7 @@ public final class Light3D implements Shape3D {
 
     @Override
     public double getSpecularReflectionExponent() {
-        return 1;
+        return 10;
     }
 
     public double getConstantAttenuationCoefficient(){
@@ -63,11 +63,11 @@ public final class Light3D implements Shape3D {
     }
 
     public double getLinearAttenuationCoefficient(){
-        return 0.01;
+        return 0.1;
     }
 
     public double getQuadraticAttenuationCoefficient(){
-        return 0.0005;
+        return 0.00005;
     }
 
     @Override
