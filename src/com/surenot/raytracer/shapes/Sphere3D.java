@@ -2,40 +2,34 @@ package com.surenot.raytracer.shapes;
 
 import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Surface;
 import com.surenot.raytracer.primitives.Vector3D;
+
+import java.awt.*;
 
 public final class Sphere3D implements Shape3D {
 
     private final Point3D center;
     private final double radius;
     private final double r2;
-    private final int color;
+    private final Surface surface;
 
-    public Sphere3D(final Point3D center, final double radius, final int color) {
+    public Sphere3D(final Point3D center, final double radius) {
+        this(center, radius, new Surface(Color.LIGHT_GRAY.getRGB(), 1, 1, 1, 50));
+    }
+
+    public Sphere3D(final Point3D center, final double radius, Surface surface) {
         if (center == null) {
             throw new IllegalArgumentException();
         }
         this.center = center;
         this.radius = radius;
         this.r2 = Math.pow(radius, 2);
-        this.color = color;
+        this.surface = surface;
     }
 
     @Override
     public Impact3D isHit(final Vector3D v) {
-        /*Vector3D vs = new Vector3D(v.getOrigin(), center);
-        if ( v.normalize().scalarProduct(vs.normalize()) <= 0 ) return Impact3D.NONE;
-        Vector3D proj = new Vector3D(v.getOrigin(), v.getOrigin().add(v.normalize().multiply(v.normalize().scalarProduct(vs.normalize()) / v.getLength())));
-        double dproj = proj.getDirection().distance(center);
-        if ( dproj > radius ) return Impact3D.NONE;
-        if ( dproj == radius ) return new Impact3D(v, v.getDirection(), this, dproj);
-        double d1 = proj.getLength() - Math.sqrt(r2 - Math.pow(dproj, 2));
-        double d2 = proj.getLength() + Math.sqrt(r2 - Math.pow(dproj, 2));
-        double closest = (d1 < 0 ? (d2 < 0 ? Double.NaN : d2) : (d2 < 0 ? d1 : (d1 < d2 ? d1 : d2)));
-        if ( Double.isNaN(closest)) return Impact3D.NONE;
-        Vector3D res = v.multiply(closest);
-        return new Impact3D(v, res.getDirection(), this, res.getLength());*/
-
         // Origin - center as we use the normalized v vector
         Point3D no = v.getOrigin().substract(center);
         // TODO a = 1 if the vector is normalized, avoid this computation
@@ -73,28 +67,8 @@ public final class Sphere3D implements Shape3D {
     }
 
     @Override
-    public int getColor() {
-        return color;
-    }
-
-    @Override
-    public double getAmbiantReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getDiffuseReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getSpecularReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getSpecularReflectionExponent() {
-        return 50;
+    public Surface getSurface(){
+        return surface;
     }
 
     @Override
@@ -105,8 +79,9 @@ public final class Sphere3D implements Shape3D {
         Sphere3D sphere3D = (Sphere3D) o;
 
         if (Double.compare(sphere3D.radius, radius) != 0) return false;
-        if (color != sphere3D.color) return false;
-        return center != null ? center.equals(sphere3D.center) : sphere3D.center == null;
+        if (Double.compare(sphere3D.r2, r2) != 0) return false;
+        if (center != null ? !center.equals(sphere3D.center) : sphere3D.center != null) return false;
+        return !(surface != null ? !surface.equals(sphere3D.surface) : sphere3D.surface != null);
 
     }
 
@@ -117,7 +92,9 @@ public final class Sphere3D implements Shape3D {
         result = center != null ? center.hashCode() : 0;
         temp = Double.doubleToLongBits(radius);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
-        result = 31 * result + color;
+        temp = Double.doubleToLongBits(r2);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (surface != null ? surface.hashCode() : 0);
         return result;
     }
 
@@ -126,6 +103,7 @@ public final class Sphere3D implements Shape3D {
         return "Sphere3D{" +
                 "center=" + center +
                 ", radius=" + radius +
+                ", surface=" + surface +
                 '}';
     }
 }

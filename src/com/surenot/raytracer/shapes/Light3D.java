@@ -2,6 +2,7 @@ package com.surenot.raytracer.shapes;
 
 import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Surface;
 import com.surenot.raytracer.primitives.Vector3D;
 
 public final class Light3D implements Shape3D {
@@ -34,28 +35,8 @@ public final class Light3D implements Shape3D {
     }
 
     @Override
-    public int getColor() {
-        return shape.getColor();
-    }
-
-    @Override
-    public double getAmbiantReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getDiffuseReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getSpecularReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getSpecularReflectionExponent() {
-        return 10;
+    public Surface getSurface() {
+        return shape.getSurface();
     }
 
     public double getConstantAttenuationCoefficient(){

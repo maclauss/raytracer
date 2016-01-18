@@ -2,6 +2,7 @@ package com.surenot.raytracer.shapes;
 
 import com.surenot.raytracer.primitives.Impact3D;
 import com.surenot.raytracer.primitives.Point3D;
+import com.surenot.raytracer.primitives.Surface;
 import com.surenot.raytracer.primitives.Vector3D;
 
 import java.awt.*;
@@ -13,10 +14,16 @@ public class Plane implements Shape3D {
 
     private final Vector3D vector;
     private final Vector3D normal;
+    private final Surface surface;
 
     public Plane(final Vector3D vector, final Vector3D normal){
+        this(vector, normal, new Surface(Color.DARK_GRAY.getRGB(), 1, 0.5, 0.2, 50));
+    }
+
+    public Plane(final Vector3D vector, final Vector3D normal, final Surface surface){
         this.vector = vector;
         this.normal = normal;
+        this.surface = surface;
     }
 
     public Vector3D getVector() {
@@ -49,28 +56,8 @@ public class Plane implements Shape3D {
     }
 
     @Override
-    public int getColor() {
-        return Color.GRAY.getRGB();
-    }
-
-    @Override
-    public double getAmbiantReflectionCoefficient() {
-        return 1;
-    }
-
-    @Override
-    public double getDiffuseReflectionCoefficient() {
-        return 0.5;
-    }
-
-    @Override
-    public double getSpecularReflectionCoefficient() {
-        return 0.2;
-    }
-
-    @Override
-    public double getSpecularReflectionExponent() {
-        return 50;
+    public Surface getSurface() {
+        return surface;
     }
 
     @Override

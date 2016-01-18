@@ -30,8 +30,9 @@ public final class Scene {
 
     public final static double MAX_AMBIENT_LIGHT_INTENSITY = 0.3;
     public final static double MAX_DIFFUSE_LIGHT_INTENSITY = 1 - MAX_AMBIENT_LIGHT_INTENSITY;
+    public final static int ANTI_ALIASING = 1;
 
-    private final Collection<Ray> newScreen;
+    private final Collection<Collection<Ray>> newScreen;
     private final Collection<Shape3D> shapes;
     private final Collection<Light3D> lights;
     private final BufferedImage image;
@@ -49,6 +50,9 @@ public final class Scene {
         if (pixelCountX <= 0) throw new IllegalArgumentException();
         if (pixelCountY <= 0) throw new IllegalArgumentException();
 
+        int aaPixelCountX = pixelCountX * ANTI_ALIASING;
+        int aaPixelCountY = pixelCountY * ANTI_ALIASING;
+
         this.image = new BufferedImage(pixelCountY, pixelCountX, BufferedImage.TYPE_INT_RGB);
         this.newScreen = new ArrayList<>(pixelCountX * pixelCountY);
         this.shapes = new ArrayList<>(shapes);
@@ -61,23 +65,45 @@ public final class Scene {
         double pixelSizeZ = screenSize.getY() / pixelCountY;
         for (int i = 0; i < pixelCountY; i++) {
             for (int j = 0; j < pixelCountX; j++) {
-                newScreen.add(new Ray(i, j,
-                        new Vector3D(new Point3D(origin.getX(),
-                                origin.getY() + i * pixelSizeY,
-                                origin.getZ() - j * pixelSizeZ)
-                                .substract(observer),
-                            new Point3D(origin.getX(),
-                                    origin.getY() + i * pixelSizeY,
-                                    origin.getZ() - j * pixelSizeZ)
-                                    .substract(observer),
-                            false)));
+                ArrayList<Ray> list = new ArrayList();
+                for ( int x = 0; x < ANTI_ALIASING; x++ ){
+                    for ( int y = 0; y < ANTI_ALIASING; y++ ){
+                        list.add(new Ray(i, j,
+                                new Vector3D(
+                                        new Point3D(origin.getX(),
+                                            origin.getY() + ( i + x ) * pixelSizeY,
+                                            origin.getZ() - ( j + y ) * pixelSizeZ)
+                                                .substract(observer),
+                                        new Point3D(origin.getX(),
+                                            origin.getY() + ( i + x ) * pixelSizeY,
+                                            origin.getZ() - ( j + y ) * pixelSizeZ)
+                                                .substract(observer),
+                                        false)));
+                    }
+                }
+                newScreen.add(list);
             }
         }
     }
 
     public BufferedImage render() {
-        newScreen.stream()
-                .forEach(ray -> image.setRGB(ray.getX(), ray.getY(), computeColor(ray.getVector())));
+        newScreen.parallelStream()
+                .forEach(rayList -> {
+                    int r = 0, g = 0, b = 0;
+                    Integer x = null, y = null;
+                    for ( Ray ray : rayList ){
+                        if ( x == null ) x = ray.getX();
+                        if ( y == null ) y = ray.getY();
+                        Color c = new Color(computeColor(ray.getVector()));
+                        r += c.getRed();
+                        g += c.getGreen();
+                        b += c.getBlue();
+                    }
+                    synchronized (image) {
+                        image.setRGB(x, y,
+                                new Color(r / rayList.size(), g / rayList.size(), b / rayList.size()).getRGB());
+                    }
+                });
         return image;
     }
 
@@ -90,17 +116,17 @@ public final class Scene {
                 .reduce(Impact3D.NONE, (a, b) -> a.getDistance() < b.getDistance() ? a : b);
 
         if (impact.equals(Impact3D.NONE)) return Color.BLACK.getRGB();
-        if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getColor();
+        if (impact.getImpactedObject().getClass() == Light3D.class) return impact.getImpactedObject().getSurface().getColor();
 
         Vector3D n = impact.getImpactedObject().getNormal(impact.getPoint());
 
-        final Color impactedColor = new Color(impact.getImpactedObject().getColor());
+        final Color impactedColor = new Color(impact.getImpactedObject().getSurface().getColor());
         final double or = impactedColor.getRed() / 255.0;
         final double og = impactedColor.getGreen() / 255.0;
         final double ob = impactedColor.getBlue() / 255.0;
 
-        final double diffuseCoefficient = MAX_DIFFUSE_LIGHT_INTENSITY * impact.getImpactedObject().getDiffuseReflectionCoefficient();
-        final double tmp = MAX_AMBIENT_LIGHT_INTENSITY * impact.getImpactedObject().getAmbiantReflectionCoefficient();
+        final double diffuseCoefficient = MAX_DIFFUSE_LIGHT_INTENSITY * impact.getImpactedObject().getSurface().getDiffuseReflectionCoefficient();
+        final double tmp = MAX_AMBIENT_LIGHT_INTENSITY * impact.getImpactedObject().getSurface().getAmbientReflectionCoefficient();
         double ambientIntensityR = or * tmp, ambientIntensityG = og * tmp, ambientIntensityB = ob * tmp;
         double diffuseIntensityR = 0, diffuseIntensityG = 0, diffuseIntensityB = 0;
         double specularIntensityR = 0, specularIntensityG = 0, specularIntensityB = 0;
@@ -116,9 +142,10 @@ public final class Scene {
                                 i.getSquareDistance() < sqd;
                     })) continue;
 
-            final double lr = Color.WHITE.getRed() / 255.0;
-            final double lg = Color.WHITE.getGreen() / 255.0;
-            final double lb = Color.WHITE.getBlue() / 255.0;
+            final Color lightColor = new Color(light.getSurface().getColor());
+            final double lr = lightColor.getRed() / 255.0;
+            final double lg = lightColor.getGreen() / 255.0;
+            final double lb = lightColor.getBlue() / 255.0;
 
             // Diffuse light
             double theta = -n.normalize().scalarProduct(lightVector.normalize());
@@ -138,8 +165,8 @@ public final class Scene {
             double scalarProduct = r.normalize().scalarProduct(lightVector.negate().normalize());
             if ( scalarProduct > 0 ) {
                 double specularIntensity = atmosphericAttenuation *
-                        impact.getImpactedObject().getSpecularReflectionCoefficient() *
-                        Math.pow(scalarProduct, impact.getImpactedObject().getSpecularReflectionExponent());
+                        impact.getImpactedObject().getSurface().getSpecularReflectionCoefficient() *
+                        Math.pow(scalarProduct, impact.getImpactedObject().getSurface().getSpecularReflectionExponent());
                 specularIntensityR += lr * specularIntensity;
                 specularIntensityG += lg * specularIntensity;
                 specularIntensityB += lb * specularIntensity;
